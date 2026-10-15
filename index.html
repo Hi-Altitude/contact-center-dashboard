@@ -5246,7 +5246,7 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
   @media (max-width: 700px) { [data-expand-btn] { display: none !important; } }
   /* Executive Summary goal cards: three equal columns, or one column when there isn't room for
      three. Never two, which would leave the third card alone on its own row. */
-  @media (max-width: 1279px) { [data-exec-cards] { grid-template-columns: 1fr !important; } }
+  @media (max-width: 1279px) { [data-exec-cards] { grid-template-columns: 1fr !important; row-gap: 20px !important; } [data-exec-cards] > div { grid-row: auto !important; display: flex !important; flex-direction: column; } }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -7726,9 +7726,10 @@ a:hover{color:var(--ink-deep);}
       </div>
     </div>
 
-    <div data-exec-cards="" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:20px;">
+    <div data-exec-cards="" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 20px;margin-top:20px;">
 
-      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px;display:flex;flex-direction:column;">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px;display:grid;grid-template-rows:subgrid;grid-row:span 4;row-gap:0;align-content:start;">
+        <div data-exec-row="top">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;min-height:60px;">
           <div>
             <div style="font:700 15px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--sage-deep);">Customer Satisfaction (CSAT)</div>
@@ -7741,7 +7742,8 @@ a:hover{color:var(--ink-deep);}
           <span style="font:700 15px/1.3 'Lato';color:var(--ink);max-width:200px;">of customer surveys were positive</span>
         </div>
         <sc-if value="{{ csatSpansGorgiasSwitch }}" hint-placeholder-val="{{ false }}"><div style="font:400 12px/1.3 'Lato';color:#8C6A3F;font-style:italic;margin-top:6px;">Includes the Sep 2026 switch to Gorgias surveys, so the trend isn't apples-to-apples.</div></sc-if>
-        <div style="flex:{{ execGaugeSpacer }};"></div>
+        </div>
+        <div data-exec-row="gauge">
         <sc-if value="{{ csatGauge.has }}" hint-placeholder-val="{{ true }}">
         <div style="width:100%;max-width:300px;margin:18px auto 0;">
           <div style="position:relative;">
@@ -7765,6 +7767,8 @@ a:hover{color:var(--ink-deep);}
           <div style="font:700 16px/1.25 'Lato';color:{{ csatGauge.color }};text-align:center;margin-top:12px;">{{ csatGauge.gapText }}</div>
         </div>
         </sc-if>
+        </div>
+        <div data-exec-row="detail">
         <sc-if value="{{ execIsDetailed1 }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;gap:18px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap;">
             <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Phone</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ csatPhoneLabel }}</div></div>
@@ -7774,8 +7778,10 @@ a:hover{color:var(--ink-deep);}
           </div>
           <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:8px;">Weighted by contact volume. Before Sep 2026, Kustomer reported one blended digital score (shown under Email). From Sep 2026, Email and Chat scores come from Gorgias; SMS has no scored surveys yet. Gorgias surveys differently, so Sep 2026 on isn't directly comparable to earlier months.</div>
         </sc-if>
+        </div>
+        <div data-exec-row="footer" style="margin-top:auto;">
         <sc-if value="{{ execIsDetailed1 }}" hint-placeholder-val="{{ false }}">
-        <div style="flex:{{ execFooterSpacer }};"></div>
+        <div style="height:16px;"></div>
         <div sc-camel-on-mouse-enter="{{ onCsatGoalHover }}" sc-camel-on-mouse-leave="{{ onCsatGoalUnhover }}" style="display:flex;align-items:center;justify-content:space-between;margin-top:0;gap:10px;padding-top:12px;border-top:1px solid var(--line);position:relative;">
           <span style="font:400 13px/1 'Lato';color:var(--muted);display:flex;align-items:center;gap:6px;">{{ csatGoalLabel }} <sc-if value="{{ execIsDetailed1 }}" hint-placeholder-val="{{ false }}"><span sc-camel-on-click="{{ toggleCsatGoalPopover }}" style="width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font:700 10px/1 'Lato';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">i</span></sc-if></span>
           <span style="font:700 11px/1 'Lato';letter-spacing:.04em;padding:5px 12px;border-radius:14px;white-space:nowrap;flex-shrink:0;background:{{ csatChipBg }};color:{{ csatChipColor }};">{{ csatGoalMetIcon }} {{ csatChipLabel }}</span>
@@ -7797,9 +7803,12 @@ a:hover{color:var(--ink-deep);}
           </sc-if>
         </div>
         </sc-if>
+      
+        </div>
       </div>
 
-      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px;display:flex;flex-direction:column;">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px;display:grid;grid-template-rows:subgrid;grid-row:span 4;row-gap:0;align-content:start;">
+        <div data-exec-row="top">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;min-height:60px;">
           <div>
             <div style="font:700 15px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--sage-deep);">Customers Helped On Time</div>
@@ -7811,7 +7820,8 @@ a:hover{color:var(--ink-deep);}
           <span style="font:600 62px/1 'Playfair Display';color:var(--ink);">{{ slaLabel }}</span>
           <span style="font:700 15px/1.3 'Lato';color:var(--ink);max-width:220px;">of phone, email, chat &amp; SMS contacts were answered on time</span>
         </div>
-        <div style="flex:{{ execGaugeSpacer }};"></div>
+        </div>
+        <div data-exec-row="gauge">
         <sc-if value="{{ slaGauge.has }}" hint-placeholder-val="{{ true }}">
         <div style="width:100%;max-width:300px;margin:18px auto 0;">
           <div style="position:relative;">
@@ -7835,6 +7845,8 @@ a:hover{color:var(--ink-deep);}
           <div style="font:700 16px/1.25 'Lato';color:{{ slaGauge.color }};text-align:center;margin-top:12px;">{{ slaGauge.gapText }}</div>
         </div>
         </sc-if>
+        </div>
+        <div data-exec-row="detail">
         <sc-if value="{{ execIsDetailed2 }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;gap:18px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap;">
             <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Phone</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ slaPhoneLabel }}</div><div style="font:400 11px/1.3 'Lato';color:var(--muted);">{{ slaPhoneGoalNote }}</div></div>
@@ -7844,8 +7856,10 @@ a:hover{color:var(--ink-deep);}
           </div>
           <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:8px;">Weighted by contact volume per channel. Each channel's "on time" threshold differs by response-time target.</div>
         </sc-if>
+        </div>
+        <div data-exec-row="footer" style="margin-top:auto;">
         <sc-if value="{{ execIsDetailed2 }}" hint-placeholder-val="{{ false }}">
-        <div style="flex:{{ execFooterSpacer }};"></div>
+        <div style="height:16px;"></div>
         <div sc-camel-on-mouse-enter="{{ onSlaGoalHover }}" sc-camel-on-mouse-leave="{{ onSlaGoalUnhover }}" style="display:flex;align-items:center;justify-content:space-between;margin-top:0;gap:10px;padding-top:12px;border-top:1px solid var(--line);position:relative;">
           <span style="font:400 13px/1 'Lato';color:var(--muted);display:flex;align-items:center;gap:6px;">{{ slaGoalLabel }} <sc-if value="{{ execIsDetailed2 }}" hint-placeholder-val="{{ false }}"><span sc-camel-on-click="{{ toggleSlaGoalPopover }}" style="width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font:700 10px/1 'Lato';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">i</span></sc-if></span>
           <span style="font:700 11px/1 'Lato';letter-spacing:.04em;padding:5px 12px;border-radius:14px;white-space:nowrap;flex-shrink:0;background:{{ slaChipBg }};color:{{ slaChipColor }};">{{ slaGoalMetIcon }} {{ slaChipLabel }}</span>
@@ -7867,9 +7881,12 @@ a:hover{color:var(--ink-deep);}
           </sc-if>
         </div>
         </sc-if>
+      
+        </div>
       </div>
 
-      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px;display:flex;flex-direction:column;">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px;display:grid;grid-template-rows:subgrid;grid-row:span 4;row-gap:0;align-content:start;">
+        <div data-exec-row="top">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;min-height:60px;">
           <div>
             <div style="font:700 15px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--sage-deep);">Contacts per 100 D2C Orders</div>
@@ -7888,7 +7905,8 @@ a:hover{color:var(--ink-deep);}
           <span style="display:inline-flex;align-items:center;gap:6px;font:700 13px/1.3 'Lato';color:var(--ai);"><span style="width:9px;height:9px;border-radius:50%;background:var(--ai);flex-shrink:0;"></span>{{ aiPer100Label }} handled by AI</span>
         </div>
         </sc-if>
-        <div style="flex:{{ execGaugeSpacer }};"></div>
+        </div>
+        <div data-exec-row="gauge">
         <sc-if value="{{ contactsGauge.has }}" hint-placeholder-val="{{ true }}">
         <div style="width:100%;max-width:300px;margin:18px auto 0;">
           <div style="position:relative;">
@@ -7912,6 +7930,8 @@ a:hover{color:var(--ink-deep);}
           <div style="font:700 16px/1.25 'Lato';color:{{ contactsGauge.color }};text-align:center;margin-top:12px;">{{ contactsGauge.gapText }}</div>
         </div>
         </sc-if>
+        </div>
+        <div data-exec-row="detail">
         <sc-if value="{{ execIsDetailed3 }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;gap:18px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap;">
             <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Total Conversations</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ contactsTotalLabel }}</div></div>
@@ -7921,8 +7941,10 @@ a:hover{color:var(--ink-deep);}
           </div>
           <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:8px;">Conversations answered across Phone, Email, Chat and SMS (AI included) ÷ the sheet's "Total # Sales CC and Web" orders, × 100. Summed over the whole period before dividing. Lower means customers needed us less per order.</div>
         </sc-if>
+        </div>
+        <div data-exec-row="footer" style="margin-top:auto;">
         <sc-if value="{{ execIsDetailed3 }}" hint-placeholder-val="{{ false }}">
-        <div style="flex:{{ execFooterSpacer }};"></div>
+        <div style="height:16px;"></div>
         <div sc-camel-on-mouse-enter="{{ onContactsGoalHover }}" sc-camel-on-mouse-leave="{{ onContactsGoalUnhover }}" style="display:flex;align-items:center;justify-content:space-between;margin-top:0;gap:10px;padding-top:12px;border-top:1px solid var(--line);position:relative;">
           <span style="font:400 13px/1 'Lato';color:var(--muted);display:flex;align-items:center;gap:6px;">{{ contactsGoalLabel }} <sc-if value="{{ execIsDetailed3 }}" hint-placeholder-val="{{ false }}"><span sc-camel-on-click="{{ toggleContactsGoalPopover }}" style="width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font:700 10px/1 'Lato';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">i</span></sc-if></span>
           <span style="font:700 11px/1 'Lato';letter-spacing:.04em;padding:5px 12px;border-radius:14px;white-space:nowrap;flex-shrink:0;background:{{ contactsChipBg }};color:{{ contactsChipColor }};">{{ contactsGoalMetIcon }} {{ contactsChipLabel }}</span>
@@ -7944,6 +7966,8 @@ a:hover{color:var(--ink-deep);}
           </sc-if>
         </div>
         </sc-if>
+      
+        </div>
       </div>
 
 
@@ -10023,9 +10047,7 @@ class Component extends DCLogic {
       execIsCustomSel: isCustomSel,
       execCustomSummaryLabel: isCustomSel ? (selMonths.length === 1 ? selMonths[0] : selMonths.length + ' months selected') : '',
       execCustomRowVisibility: isCustomSel ? 'visible' : 'hidden',
-      // Summary View: gauges line up across the three cards (free space goes above them). Detailed View:
-      // the breakdowns differ in height, so the gauge stays under its number and the footers line up instead.
-      execGaugeSpacer: this.state.execSubMode === 'detailed' ? '0 0 0px' : '1 0 0px', execFooterSpacer: this.state.execSubMode === 'detailed' ? '1 0 16px' : '0 0 16px',
+      // Cards use a CSS subgrid (top / gauge / detail / footer rows) so each section lines up across all three.
       execIsDetailed1: this.state.execSubMode === 'detailed', execIsDetailed2: this.state.execSubMode === 'detailed',
       execIsDetailed3: this.state.execSubMode === 'detailed', execIsDetailed4: this.state.execSubMode === 'detailed',
       execModeBg: this.state.execSubMode === 'executive' ? 'var(--sage-deep)' : 'transparent',
