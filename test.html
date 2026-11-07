@@ -9811,9 +9811,9 @@ class Component extends DCLogic {
 
   // Sheet URL kept AES-GCM encrypted at rest; only decrypted client-side after the correct
   // passphrase is entered, so the page starts blank and never fetches until unlocked.
-  static ENC_SALT = 'H9hizbiWLsUuq4/Rl5HscQ==';
-  static ENC_IV = 'ZsnkZZH91enh+YmP';
-  static ENC_CT = 'zVs26cVNxzWutjrws0i/31nI7WAzmx1LBIDAo3CTqoOVhRiL4Mng/Qo3pPOareV/FkiJlPE0APm0gwC2H6I8C4+RQ7VssDzDkQidN8WMZ/REEOa1Nm6TYYjkyTPGIhOVxqeW/0Ayfz7t2JVrfEiFJagHeK4YbTvv/9pnq2IuQ62el2rcm8c3+8t/aNIC3MDER5TZF+LyxWkASw5Of0qImJJ56ykaAP/iBvik/mRWei3E2rlQ5Im2jmPOuR6OPj0Z48N4SFc=';
+  static ENC_SALT = 'QXHmMA+CKw5gNkzupBapvQ==';
+  static ENC_IV = '6CxwwvXaqWmzAkgg';
+  static ENC_CT = 'vs7m1xrFBO+9I8AA1+9I8dlKXJQtBREmie12E36xVrFyFWVlsKe5nwK1YYdi/zsKqJK0kuHYLaLBrj+sd1uXmtVFay13lIQpGe9yqCM/3Jlz3iBQQSu1kD9aKbkQSVoZgh61sY1e9zKoZ0Cx41huI77iRG518znLY33EzSigxoTgH56phw0bMaDkwsJL4hCl73tXeGRRTuYl84jytFbRaPYTAQl78975EJQBxX8gF6GHu9boqn/qikvH/RY63/MA7PAgvja52LHU';
 
   b64ToBuf(b64) { return Uint8Array.from(atob(b64), c => c.charCodeAt(0)); }
 
