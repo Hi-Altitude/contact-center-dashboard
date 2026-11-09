@@ -5558,7 +5558,7 @@ a:hover{color:var(--ink-deep);}
     </div>
     <div data-sidebar-footer="" style="display:flex;flex-direction:column;gap:10px;padding-top:18px;border-top:1px solid rgba(255,255,255,.15);">
       <div style="font:400 13px/1.4 'Lato';color:#B9B2A4;">Data source</div>
-      <div style="font:700 13px/1.4 'Lato';color:#EDE6D8;">Ops Spreadsheet (monthly)</div>
+      <div style="font:700 13px/1.4 'Lato';color:#EDE6D8;">CX Metrics feed (daily)</div>
       <div style="font:400 12px/1.4 'Lato';color:#B9B2A4;">Data as of {{ dataAsOfLabel }}</div>
       <sc-if value="{{ isLoadingLive }}" hint-placeholder-val="{{ false }}">
         <div style="font:400 12px/1.4 'Lato';color:var(--sage);">Checking for updates…</div>
@@ -5986,7 +5986,7 @@ a:hover{color:var(--ink-deep);}
 
       </div>
 
-      <div style="text-align:center;font:400 12px/1 'Lato';color:var(--muted);margin-top:2px;">Email = team emails sent&nbsp;·&nbsp;Phone / Chat = answered contacts&nbsp;·&nbsp;SMS = unique conversations&nbsp;·&nbsp;Data refreshed monthly from the ops spreadsheet</div>
+      <div style="text-align:center;font:400 12px/1 'Lato';color:var(--muted);margin-top:2px;">Email = team emails sent&nbsp;·&nbsp;Phone = calls answered (agents + FlipCX) · Chat = Gorgias chat conversations&nbsp;·&nbsp;SMS = unique conversations&nbsp;·&nbsp;Data refreshed daily from the CX Metrics feed · † Comparison spans a data-definition change (e.g., Gorgias replaced Chatty and Kustomer in Sep 2026)</div>
     </section>
 
     <section data-report-section="" ref="{{ revSectionRef }}" style="height:100vh;overflow-y:auto;padding:12px 24px 10px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;border-top:1px solid var(--line);scroll-snap-align:start;scroll-snap-stop:always;">
@@ -9619,6 +9619,26 @@ function feedParse(text) {
 }
 function feedLocalDate(ymd) { const p = String(ymd).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
 
+
+// Definition breaks from the feed: a YoY/MoM comparison whose two windows sit on opposite sides of a
+// field's break keeps its number but gets a " †" footnote (explained in the page footer).
+let FEED_BREAKS_RUNTIME = [];
+const FEED_FIELD_IDS = { emailVol: 'email_sent', chatVol: 'chat_created', smsVol: 'sms_conversations',
+  totalContactsAllChannels: 'contacts_total', chatOrders: 'chat_sales_revenue',
+  agentCostPerContact: 'cost_per_contact_human', aiCostPerContact: 'cost_per_contact_ai', blendedCostPerContact: 'cost_per_contact_blended' };
+function feedBreakIdx(field) {
+  const id = FEED_FIELD_IDS[field]; if (!id) return null;
+  const b = FEED_BREAKS_RUNTIME.find(x => (x.ids || []).indexOf(id) >= 0);
+  return b ? monthIdx(formatMonthLabel(b.from)) : null;
+}
+function feedCrosses(field, rowsA, rowsB) {
+  const k = feedBreakIdx(field); if (k == null) return false;
+  const side = rs => { const ms = (rs || []).filter(Boolean).map(r => monthIdx(r.month)); return { pre: ms.some(m => m < k), post: ms.some(m => m >= k) }; };
+  const a = side(rowsA), b = side(rowsB);
+  return (a.post && b.pre) || (a.pre && b.post);
+}
+function feedDagger(label, crosses) { return label && crosses ? label + ' †' : label; }
+
 function feedToRows(feed) {
   const z = x => (x == null || isNaN(Number(x)) ? 0 : Number(x));
   const pct = x => (x == null ? 0 : Number(x) * 100);
@@ -10679,8 +10699,8 @@ class Component extends DCLogic {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const text = await res.text();
       let rows;
-      if (feedIsJson(text)) { this._feed = feedParse(text); rows = feedToRows(this._feed); } // CX Metrics JSON feed
-      else { this._feed = null; rows = parseCsvText(text); }                                  // legacy published CSV
+      if (feedIsJson(text)) { this._feed = feedParse(text); FEED_BREAKS_RUNTIME = this._feed.breaks || []; rows = feedToRows(this._feed); } // CX Metrics JSON feed
+      else { this._feed = null; FEED_BREAKS_RUNTIME = []; rows = parseCsvText(text); }                                  // legacy published CSV
       if (!rows) throw new Error('columns not recognized');
       clearTimeout(this._bgRetryTimer);
       this.setState({ rows, loading: false, lastFetched: new Date() });
@@ -11183,13 +11203,13 @@ class Component extends DCLogic {
     const ccGrandYoYPct = volPct(grandTotal, pyGrandTotalVol);
     const ccGrandYoYArrow = ccGrandYoYPct == null || ccGrandYoYPct >= 0 ? '\u25b2' : '\u25bc';
     const ccGrandYoYColor = ccGrandYoYPct == null || ccGrandYoYPct >= 0 ? 'var(--sage-deep)' : '#AF4848';
-    const ccGrandYoYRest = hasCcGrandYoY ? volChange(grandTotal, pyGrandTotalVol, ccGrandYoYPct) + ' YoY' : null;
+    const ccGrandYoYRest = hasCcGrandYoY ? feedDagger(volChange(grandTotal, pyGrandTotalVol, ccGrandYoYPct) + ' YoY', feedCrosses('totalContactsAllChannels', trailing, priorYearVol)) : null;
     const ccGrandCurrAvg = grandTotal / n, ccGrandPrevAvg = pyPrevGrandTotalVol / prevVolN;
     const hasCcGrandMoM = momAllowedVol && (!ccFilter.isCustom || prevWindowVol.length === trailing.length) && prevWindowVol.length > 0 && ccGrandPrevAvg > 0;
     const ccGrandMoMPct = volPct(ccGrandCurrAvg, ccGrandPrevAvg);
     const ccGrandMoMArrow = ccGrandMoMPct == null || ccGrandMoMPct >= 0 ? '\u25b2' : '\u25bc';
     const ccGrandMoMColor = ccGrandMoMPct == null || ccGrandMoMPct >= 0 ? 'var(--sage-deep)' : '#AF4848';
-    const ccGrandMoMRest = hasCcGrandMoM ? volChange(ccGrandCurrAvg, ccGrandPrevAvg, ccGrandMoMPct) + (momIsPriorPeriodVol ? ' vs Prior Period' : ' MoM') : null;
+    const ccGrandMoMRest = hasCcGrandMoM ? feedDagger(volChange(ccGrandCurrAvg, ccGrandPrevAvg, ccGrandMoMPct) + (momIsPriorPeriodVol ? ' vs Prior Period' : ' MoM'), feedCrosses('totalContactsAllChannels', trailing, prevWindowVol)) : null;
     const volFields = { email: 'emailVol', voice: 'voiceVol', chat: 'chatVol', sms: 'smsVol' };
     const volBadges = {};
     const momVolSuffix = momIsPriorPeriodVol ? ' vs Prior Period' : ' MoM';
@@ -11199,8 +11219,8 @@ class Component extends DCLogic {
       const hasYoYHere = hasVolYoY && pyVolTotals[key] > 0;
       const hasMoMHere = momAllowedVol && (!ccFilter.isCustom || prevWindowVol.length === trailing.length) && prevWindowVol.length > 0 && prevAvg > 0;
       volBadges[key] = {
-        hasYoY: hasYoYHere, yoyLabel: volYoYLabel(totals[key], pyVolTotals[key]), yoyColor: volColor(totals[key], pyVolTotals[key]),
-        hasMoM: hasMoMHere, momLabel: volMoMLabelHere(currAvg, prevAvg), momColor: volColor(currAvg, prevAvg),
+        hasYoY: hasYoYHere, yoyLabel: feedDagger(volYoYLabel(totals[key], pyVolTotals[key]), feedCrosses(volFields[key], trailing, priorYearVol)), yoyColor: volColor(totals[key], pyVolTotals[key]),
+        hasMoM: hasMoMHere, momLabel: feedDagger(volMoMLabelHere(currAvg, prevAvg), feedCrosses(volFields[key], trailing, prevWindowVol)), momColor: volColor(currAvg, prevAvg),
         hasAny: hasYoYHere || hasMoMHere, hasBoth: hasYoYHere && hasMoMHere,
       };
     });
@@ -11335,7 +11355,7 @@ class Component extends DCLogic {
       lastFetchedLabel: this.state.lastFetched ? this.state.lastFetched.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : null,
       // Hand-set whenever a structural/logic change ships (not auto-derived) — distinct from "Page
       // checked", which is about the DATA refresh, not the dashboard's own construction.
-      dashboardBuildDateLabel: 'Sep 4, 2026', // bump on each standalone export
+      dashboardBuildDateLabel: 'Nov 7, 2026', // bump on each standalone export
       goToExecSummary: this.goToExecSummary, execNavBg: this.state.showExecSummary ? 'rgba(95,125,94,.28)' : 'transparent',
       showExecSummary: this.state.showExecSummary,
       ...this.renderExecSummaryVals(this.state.rows || FALLBACK_ROWS, this.state.scorecards ? this.state.scorecards.fullHistory : null, trailingMonths),
@@ -11891,12 +11911,12 @@ class Component extends DCLogic {
       hasHumanCpcSpark: humanCpcSpark.has, humanCpcSparkPoints: humanCpcSpark.points, humanCpcSparkColor: humanCpcSpark.color, humanCpcSparkList: humanCpcSpark.list,
       hasAiCpcSpark: aiCpcSpark.has, aiCpcSparkPoints: aiCpcSpark.points, aiCpcSparkColor: aiCpcSpark.color, aiCpcSparkList: aiCpcSpark.list,
       hasAllInCpcSpark: allInCpcSpark.has, allInCpcSparkPoints: allInCpcSpark.points, allInCpcSparkColor: allInCpcSpark.color, allInCpcSparkList: allInCpcSpark.list,
-      hasHumanMoM: showMoM && !!prev, humanMoMLabel: prev && momLabel(latest.agentCostPerContact, prev.agentCostPerContact), humanMoMColor: prev && momColorInverse(latest.agentCostPerContact, prev.agentCostPerContact),
-      hasAiMoM: showMoM && !!prev, aiMoMLabel: prev && momLabel(latest.aiCostPerContact, prev.aiCostPerContact), aiMoMColor: prev && momColorInverse(latest.aiCostPerContact, prev.aiCostPerContact),
-      hasAllInMoM: showMoM && !!prev, allInMoMLabel: prev && momLabel(latest.blendedCostPerContact, prev.blendedCostPerContact), allInMoMColor: prev && momColorInverse(latest.blendedCostPerContact, prev.blendedCostPerContact),
-      hasHumanYoY: hasYoYData && pyHuman > 0, humanYoYLabel: momLabel(ttmHuman, pyHuman) && momLabel(ttmHuman, pyHuman).replace('MoM','YoY'), humanYoYColor: momColorInverse(ttmHuman, pyHuman),
-      hasAiYoY: hasYoYData && pyAi > 0, aiYoYLabel: momLabel(ttmAi, pyAi) && momLabel(ttmAi, pyAi).replace('MoM','YoY'), aiYoYColor: momColorInverse(ttmAi, pyAi),
-      hasAllInYoY: hasYoYData && pyBlended > 0, allInYoYLabel: momLabel(ttmBlended, pyBlended) && momLabel(ttmBlended, pyBlended).replace('MoM','YoY'), allInYoYColor: momColorInverse(ttmBlended, pyBlended),
+      hasHumanMoM: showMoM && !!prev, humanMoMLabel: feedDagger(prev && momLabel(latest.agentCostPerContact, prev.agentCostPerContact), feedCrosses('agentCostPerContact', [latest], [prev])), humanMoMColor: prev && momColorInverse(latest.agentCostPerContact, prev.agentCostPerContact),
+      hasAiMoM: showMoM && !!prev, aiMoMLabel: feedDagger(prev && momLabel(latest.aiCostPerContact, prev.aiCostPerContact), feedCrosses('aiCostPerContact', [latest], [prev])), aiMoMColor: prev && momColorInverse(latest.aiCostPerContact, prev.aiCostPerContact),
+      hasAllInMoM: showMoM && !!prev, allInMoMLabel: feedDagger(prev && momLabel(latest.blendedCostPerContact, prev.blendedCostPerContact), feedCrosses('blendedCostPerContact', [latest], [prev])), allInMoMColor: prev && momColorInverse(latest.blendedCostPerContact, prev.blendedCostPerContact),
+      hasHumanYoY: hasYoYData && pyHuman > 0, humanYoYLabel: feedDagger(momLabel(ttmHuman, pyHuman) && momLabel(ttmHuman, pyHuman).replace('MoM','YoY'), feedCrosses('agentCostPerContact', isCustomBadgesEarly ? trailing : [latest], isCustomBadgesEarly ? priorYearWindow : [priorYearSingle])), humanYoYColor: momColorInverse(ttmHuman, pyHuman),
+      hasAiYoY: hasYoYData && pyAi > 0, aiYoYLabel: feedDagger(momLabel(ttmAi, pyAi) && momLabel(ttmAi, pyAi).replace('MoM','YoY'), feedCrosses('aiCostPerContact', isCustomBadgesEarly ? trailing : [latest], isCustomBadgesEarly ? priorYearWindow : [priorYearSingle])), aiYoYColor: momColorInverse(ttmAi, pyAi),
+      hasAllInYoY: hasYoYData && pyBlended > 0, allInYoYLabel: feedDagger(momLabel(ttmBlended, pyBlended) && momLabel(ttmBlended, pyBlended).replace('MoM','YoY'), feedCrosses('blendedCostPerContact', isCustomBadgesEarly ? trailing : [latest], isCustomBadgesEarly ? priorYearWindow : [priorYearSingle])), allInYoYColor: momColorInverse(ttmBlended, pyBlended),
       hasHumanBadge: (showMoM && !!prev) || (hasYoYData && pyHuman > 0), hasBothHumanBadge: showMoM && !!prev && hasYoYData && pyHuman > 0,
       humanMoMDividerStyle: (showMoM && !!prev && hasYoYData && pyHuman > 0) ? 'border-left:1px solid var(--line);padding-left:6px;' : '',
       hasAiBadge: (showMoM && !!prev) || (hasYoYData && pyAi > 0), hasBothAiBadge: showMoM && !!prev && hasYoYData && pyAi > 0,
@@ -13177,7 +13197,7 @@ class Component extends DCLogic {
       revTotalYoYArrow: yoyArrow(grandTotal, pyGrandTotal), revTotalYoYRest: yoyRest(grandTotal, pyGrandTotal),
       phoneYoYLabel: yoyLabel(totals.phone, pyTotals.phone), phoneYoYColor: yoyColor(totals.phone, pyTotals.phone),
       rebillYoYLabel: yoyLabel(totals.rebill, pyTotals.rebill), rebillYoYColor: yoyColor(totals.rebill, pyTotals.rebill),
-      chatYoYLabel: yoyLabel(totals.chat, pyTotals.chat), chatYoYColor: yoyColor(totals.chat, pyTotals.chat),
+      chatYoYLabel: feedDagger(yoyLabel(totals.chat, pyTotals.chat), feedCrosses('chatOrders', trailing, priorYear)), chatYoYColor: yoyColor(totals.chat, pyTotals.chat),
       aovYoYLabel: yoyLabel(aovAvg, pyAovAvg), aovYoYColor: yoyColor(aovAvg, pyAovAvg),
       aovYoYArrow: yoyArrow(aovAvg, pyAovAvg), aovYoYRest: (yoyRest(aovAvg, pyAovAvg) || '').replace('Revenue', ''),
 
@@ -13193,7 +13213,7 @@ class Component extends DCLogic {
       hasPhoneYoY, hasRebillYoY, hasChatYoY,
       hasPhoneMoM, phoneMoMLabel: momChip(phoneLatest, phonePrevMonth, momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), phoneMoMColor: yoyColor(phoneLatest, phonePrevMonth),
       hasRebillMoM, rebillMoMLabel: momChip(rebillLatest, rebillPrevMonth, momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), rebillMoMColor: yoyColor(rebillLatest, rebillPrevMonth),
-      hasChatMoM, chatMoMLabel: momChip(chatLatest, chatPrevMonth, momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), chatMoMColor: yoyColor(chatLatest, chatPrevMonth),
+      hasChatMoM, chatMoMLabel: feedDagger(momChip(chatLatest, chatPrevMonth, momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), feedCrosses('chatOrders', trailing, prevWindow)), chatMoMColor: yoyColor(chatLatest, chatPrevMonth),
 
       hasRevTrend: revTrend.has, revTrendPoints: revTrend.points, revTrendList: revTrend.list,
       revTrendLabel: trailing.length >= 2 ? periodLabel(revFilter.isCustom, trailing) : (ytdRows.length >= 2 ? (trendYear + ' YTD') : 'Trailing 6 Months'),
