@@ -5558,7 +5558,7 @@ a:hover{color:var(--ink-deep);}
     </div>
     <div data-sidebar-footer="" style="display:flex;flex-direction:column;gap:10px;padding-top:18px;border-top:1px solid rgba(255,255,255,.15);">
       <div style="font:400 13px/1.4 'Lato';color:#B9B2A4;">Data source</div>
-      <div style="font:700 13px/1.4 'Lato';color:#EDE6D8;">Ops Spreadsheet (monthly)</div>
+      <div style="font:700 13px/1.4 'Lato';color:#EDE6D8;">CX Metrics feed (daily)</div>
       <div style="font:400 12px/1.4 'Lato';color:#B9B2A4;">Data as of {{ dataAsOfLabel }}</div>
       <sc-if value="{{ isLoadingLive }}" hint-placeholder-val="{{ false }}">
         <div style="font:400 12px/1.4 'Lato';color:var(--sage);">Checking for updates…</div>
@@ -5928,47 +5928,59 @@ a:hover{color:var(--ink-deep);}
           </sc-if>
 
           <div style="flex:0.92;min-height:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 18px;display:flex;flex-direction:column;">
-            <div style="font:700 14px/1.25 'Lato';letter-spacing:.08em;text-transform:uppercase;color:var(--sage-deep);">BPO Human vs AI Automation: Contact Handling Split ({{ chartRangeLabel }} Avg)</div>
+            <div style="font:700 14px/1.25 'Lato';letter-spacing:.08em;text-transform:uppercase;color:var(--sage-deep);">BPO Human vs Automated: Contact Handling Split ({{ chartRangeLabel }} Avg)</div>
             <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:5px;margin-top:4px;">
 
-              <div style="display:flex;align-items:center;gap:14px;">
+              <div data-split-row="" style="display:flex;align-items:center;gap:14px;">
                 <div style="flex-shrink:0;width:48px;font:700 12px/1.1 'Lato';letter-spacing:.04em;text-transform:uppercase;text-align:right;">Email</div>
-                <div style="flex:1;position:relative;display:flex;height:24px;border-radius:6px;overflow:hidden;">
-                  <div style="width:{{ emailAgentPctLabel }}%;background:#B0842A;"></div>
-                  <div style="width:{{ emailAutoPctLabel }}%;background:#F0DBA6;"></div>
-                  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ emailAgentPctLabel }}% agent-handled</span>
-                  <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ emailAutoPctLabel }}% automated</span>
+                <div style="flex:1;min-width:0;display:flex;height:26px;border-radius:6px;overflow:hidden;">
+                  <div style="width:{{ emailAgentPctLabel }}%;background:#B0842A;display:flex;align-items:center;min-width:0;overflow:hidden;">
+                    <span data-split-label="agent" data-out-color="#B0842A" style="display:inline;padding:0 10px;color:#fff;font:700 13px/1 'Lato';white-space:nowrap;">{{ emailAgentPctLabel }}% agent-handled</span>
+                  </div>
+                  <div style="width:{{ emailAutoPctLabel }}%;background:#F0DBA6;display:flex;align-items:center;justify-content:flex-end;min-width:0;overflow:hidden;">
+                    <span data-split-label="auto" data-out-color="#8A6A1F" style="display:inline;padding:0 10px;color:#8A6A1F;font:700 13px/1 'Lato';white-space:nowrap;">{{ emailAutoPctLabel }}% automated</span>
+                  </div>
                 </div>
+                <div data-split-out="" style="flex-shrink:0;min-width:150px;font:700 13px/1.2 'Lato';white-space:nowrap;"></div>
               </div>
 
-              <div style="display:flex;align-items:center;gap:14px;">
+              <div data-split-row="" style="display:flex;align-items:center;gap:14px;">
                 <div style="flex-shrink:0;width:48px;font:700 12px/1.1 'Lato';letter-spacing:.04em;text-transform:uppercase;text-align:right;">Phone</div>
-                <div style="flex:1;position:relative;display:flex;height:24px;border-radius:6px;overflow:hidden;">
-                  <div style="width:{{ voiceAgentPctLabel }}%;background:var(--phone-deep);"></div>
-                  <div style="width:{{ voiceAutoPctLabel }}%;background:#E4D3E8;"></div>
-                  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ voiceAgentPctLabel }}% agent-handled</span>
-                  <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ voiceAutoPctLabel }}% automated</span>
+                <div style="flex:1;min-width:0;display:flex;height:26px;border-radius:6px;overflow:hidden;">
+                  <div style="width:{{ voiceAgentPctLabel }}%;background:var(--phone-deep);display:flex;align-items:center;min-width:0;overflow:hidden;">
+                    <span data-split-label="agent" data-out-color="#6B4770" style="display:inline;padding:0 10px;color:#fff;font:700 13px/1 'Lato';white-space:nowrap;">{{ voiceAgentPctLabel }}% agent-handled</span>
+                  </div>
+                  <div style="width:{{ voiceAutoPctLabel }}%;background:#E4D3E8;display:flex;align-items:center;justify-content:flex-end;min-width:0;overflow:hidden;">
+                    <span data-split-label="auto" data-out-color="#6B4770" style="display:inline;padding:0 10px;color:var(--phone-deep);font:700 13px/1 'Lato';white-space:nowrap;">{{ voiceAutoPctLabel }}% automated</span>
+                  </div>
                 </div>
+                <div data-split-out="" style="flex-shrink:0;min-width:150px;font:700 13px/1.2 'Lato';white-space:nowrap;"></div>
               </div>
 
-              <div style="display:flex;align-items:center;gap:14px;">
+              <div data-split-row="" style="display:flex;align-items:center;gap:14px;">
                 <div style="flex-shrink:0;width:48px;font:700 12px/1.1 'Lato';letter-spacing:.04em;text-transform:uppercase;text-align:right;">Chat</div>
-                <div style="flex:1;position:relative;display:flex;height:24px;border-radius:6px;overflow:hidden;">
-                  <div style="width:{{ chatAgentPctLabel }}%;background:#1D271D;"></div>
-                  <div style="width:{{ chatAutoPctLabel }}%;background:#A9B3A1;"></div>
-                  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ chatAgentPctLabel }}% agent-handled</span>
-                  <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ chatAutoPctLabel }}% automated</span>
+                <div style="flex:1;min-width:0;display:flex;height:26px;border-radius:6px;overflow:hidden;">
+                  <div style="width:{{ chatAgentPctLabel }}%;background:#1D271D;display:flex;align-items:center;min-width:0;overflow:hidden;">
+                    <span data-split-label="agent" data-out-color="#1D271D" style="display:inline;padding:0 10px;color:#fff;font:700 13px/1 'Lato';white-space:nowrap;">{{ chatAgentPctLabel }}% agent-handled</span>
+                  </div>
+                  <div style="width:{{ chatAutoPctLabel }}%;background:#A9B3A1;display:flex;align-items:center;justify-content:flex-end;min-width:0;overflow:hidden;">
+                    <span data-split-label="auto" data-out-color="#1D271D" style="display:inline;padding:0 10px;color:#1D271D;font:700 13px/1 'Lato';white-space:nowrap;">{{ chatAutoPctLabel }}% automated</span>
+                  </div>
                 </div>
+                <div data-split-out="" style="flex-shrink:0;min-width:150px;font:700 13px/1.2 'Lato';white-space:nowrap;"></div>
               </div>
 
-              <div style="display:flex;align-items:center;gap:14px;">
+              <div data-split-row="" style="display:flex;align-items:center;gap:14px;">
                 <div style="flex-shrink:0;width:48px;font:700 12px/1.1 'Lato';letter-spacing:.04em;text-transform:uppercase;text-align:right;">SMS</div>
-                <div style="flex:1;position:relative;display:flex;height:24px;border-radius:6px;overflow:hidden;">
-                  <div style="width:{{ smsAgentPctLabel }}%;background:#8A3C3A;"></div>
-                  <div style="width:{{ smsAutoPctLabel }}%;background:#E3C2C1;"></div>
-                  <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ smsAgentPctLabel }}% agent-handled</span>
-                  <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ smsAutoPctLabel }}% automated</span>
+                <div style="flex:1;min-width:0;display:flex;height:26px;border-radius:6px;overflow:hidden;">
+                  <div style="width:{{ smsAgentPctLabel }}%;background:#8A3C3A;display:flex;align-items:center;min-width:0;overflow:hidden;">
+                    <span data-split-label="agent" data-out-color="#8A3C3A" style="display:inline;padding:0 10px;color:#fff;font:700 13px/1 'Lato';white-space:nowrap;">{{ smsAgentPctLabel }}% agent-handled</span>
+                  </div>
+                  <div style="width:{{ smsAutoPctLabel }}%;background:#E3C2C1;display:flex;align-items:center;justify-content:flex-end;min-width:0;overflow:hidden;">
+                    <span data-split-label="auto" data-out-color="#8A3C3A" style="display:inline;padding:0 10px;color:#8A3C3A;font:700 13px/1 'Lato';white-space:nowrap;">{{ smsAutoPctLabel }}% automated</span>
+                  </div>
                 </div>
+                <div data-split-out="" style="flex-shrink:0;min-width:150px;font:700 13px/1.2 'Lato';white-space:nowrap;"></div>
               </div>
 
             </div>
@@ -5986,7 +5998,7 @@ a:hover{color:var(--ink-deep);}
 
       </div>
 
-      <div style="text-align:center;font:400 12px/1 'Lato';color:var(--muted);margin-top:2px;">Email = team emails sent&nbsp;·&nbsp;Phone / Chat = answered contacts&nbsp;·&nbsp;SMS = unique conversations&nbsp;·&nbsp;Data refreshed monthly from the ops spreadsheet</div>
+      <div style="text-align:center;font:400 12px/1 'Lato';color:var(--muted);margin-top:2px;">Email = team emails sent&nbsp;·&nbsp;Phone = calls answered (agents + FlipCX) · Chat = Gorgias chat conversations&nbsp;·&nbsp;SMS = unique conversations&nbsp;·&nbsp;Data refreshed daily from the CX Metrics feed · † Comparison spans a data-definition change (e.g., Gorgias replaced Chatty and Kustomer in Sep 2026) · Automation includes AI, flows and auto-responses, per Gorgias.</div>
     </section>
 
     <section data-report-section="" ref="{{ revSectionRef }}" style="height:100vh;overflow-y:auto;padding:12px 24px 10px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;border-top:1px solid var(--line);scroll-snap-align:start;scroll-snap-stop:always;">
@@ -6690,9 +6702,9 @@ a:hover{color:var(--ink-deep);}
           <div style="display:inline-block;background:#F5F2EE;border-radius:12px;padding:3px 10px;font:700 10px/1 'Lato';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">{{ roiLatestMonthLabel }}</div>
           <div style="font:500 22px/1 'Playfair Display';color:var(--ai);">{{ aiCpcLabel }}</div>
           <div style="font:700 11px/1.2 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:4px;">AI Contact Cost</div>
-          <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:2px;">Allocated AI cost ÷ AI-resolved contacts (estimate)</div>
+          <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:2px;">Allocated AI platform cost ÷ automated contacts (estimate)</div>
           <sc-if value="{{ hasAiBadge }}" hint-placeholder-val="{{ false }}"><span style="font:700 11px/1 'Lato';background:#F5F2EE;border:1px solid var(--line);border-radius:14px;padding:3px 9px;display:inline-flex;gap:5px;margin-top:5px;"><sc-if value="{{ hasAiYoY }}" hint-placeholder-val="{{ false }}"><span style="color:{{ aiYoYColor }};">{{ aiYoYLabel }}</span></sc-if><sc-if value="{{ hasAiMoM }}" hint-placeholder-val="{{ false }}"><span style="color:{{ aiMoMColor }};{{ aiMoMDividerStyle }}">{{ aiMoMLabel }}</span></sc-if></span></sc-if>
-          <sc-if value="{{ hasPlatformSplit }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:4px 8px;font:700 12px/1.3 'Lato';color:var(--muted);margin-top:4px;"><span>Allocated per AI-resolved contact:</span><sc-if value="{{ hasChattyCpc }}" hint-placeholder-val="{{ false }}"><span style="color:var(--ink-deep);">Chatty {{ chattyCpcLabel }}</span></sc-if><sc-if value="{{ hasGorgiasCpc }}" hint-placeholder-val="{{ false }}"><span style="color:var(--ai);">Gorgias (Email/Chat/SMS) {{ gorgiasCpcLabel }}</span></sc-if><span style="color:var(--phone-deep);">FlipCX (Phone) {{ flipCpcLabel }}</span></div></sc-if>
+          <sc-if value="{{ hasPlatformSplit }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:4px 8px;font:700 12px/1.3 'Lato';color:var(--muted);margin-top:4px;"><span>Allocated per automated contact:</span><sc-if value="{{ hasChattyCpc }}" hint-placeholder-val="{{ false }}"><span style="color:var(--ink-deep);">Chatty {{ chattyCpcLabel }}</span></sc-if><sc-if value="{{ hasGorgiasCpc }}" hint-placeholder-val="{{ false }}"><span style="color:var(--ai);">Gorgias (Email/Chat/SMS) {{ gorgiasCpcLabel }}</span></sc-if><span style="color:var(--phone-deep);">FlipCX (Phone) {{ flipCpcLabel }}</span></div></sc-if>
         </div>
         <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 12px;">
           <div style="display:inline-block;background:#F5F2EE;border-radius:12px;padding:3px 10px;font:700 10px/1 'Lato';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">{{ roiLatestMonthLabel }}</div>
@@ -6711,9 +6723,9 @@ a:hover{color:var(--ink-deep);}
           <sc-if value="{{ hasRevSplit }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;gap:10px;margin-top:5px;padding-top:5px;border-top:1px solid var(--line);">
               <span style="font:700 11px/1.3 'Lato';color:var(--human);">Human {{ humanRevPerContactLabel }}</span>
-              <span style="font:700 11px/1.3 'Lato';color:var(--ink-deep);">AI Chat {{ aiRevPerContactLabel }}</span>
+              <span style="font:700 11px/1.3 'Lato';color:var(--ink-deep);">Automated Chat {{ aiRevPerContactLabel }}</span>
             </div>
-            <div style="font:400 10px/1.3 'Lato';color:var(--muted);margin-top:1px;">{{ roiRevBasisLabel }} basis · AI Chat = Chat-Attributed chat revenue ÷ AI-handled chat contacts only</div>
+            <div style="font:400 10px/1.3 'Lato';color:var(--muted);margin-top:1px;">{{ roiRevBasisLabel }} basis · Automated Chat = Chat-Attributed chat revenue ÷ automated chat contacts only</div>
             <div id="rpc-flipcx-note" style="font:400 10px/1.3 'Lato';color:#8C6A3F;font-style:italic;margin-top:3px;">* Blended is lower than both because FlipCX-handled contacts count here with $0 revenue attributed; it does retain subscriptions, we just can't measure that value yet.</div>
           </sc-if>
         </div>
@@ -6724,7 +6736,7 @@ a:hover{color:var(--ink-deep);}
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;">
           <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
             <span style="font:700 13px/1 'Lato';letter-spacing:.08em;text-transform:uppercase;color:var(--ai);">Gorgias Platform Cost</span>
-            <span style="font:400 12px/1.3 'Lato';color:var(--muted);">One bill across Email, Chat &amp; SMS. Per-contact cost is an allocation: 100% of the AI subscription plus AI's share of Helpdesk and SMS, ÷ AI-resolved contacts.</span>
+            <span style="font:400 12px/1.3 'Lato';color:var(--muted);">One bill across Email, Chat &amp; SMS. Per-contact cost is an allocation: 100% of the AI subscription plus AI's share of Helpdesk and SMS, ÷ automated contacts.</span>
           </div>
           <span style="font:700 14px/1 'Lato';color:var(--ink);white-space:nowrap;">Total {{ gorgiasTotalLabel }}</span>
         </div>
@@ -6736,7 +6748,7 @@ a:hover{color:var(--ink-deep);}
           <div style="width:{{ gorgiasSmsPct }}%;background:var(--ai);opacity:.28;"></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 16px;">
-          <div><div style="font:500 20px/1 'Playfair Display';color:var(--ink);">{{ gorgiasAiSpendLabel }}</div><div style="font:700 11px/1.3 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--ai);margin-top:3px;">AI Agent</div><div style="font:400 12px/1.3 'Lato';color:var(--muted);">{{ gorgiasAiContactsLabel }} AI-resolved contacts · {{ gorgiasCpcLabel }} allocated each</div><div style="font:400 11px/1.3 'Lato';color:var(--muted);">{{ gorgiasAiContactsByChannelLabel }}</div></div>
+          <div><div style="font:500 20px/1 'Playfair Display';color:var(--ink);">{{ gorgiasAiSpendLabel }}</div><div style="font:700 11px/1.3 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--ai);margin-top:3px;">AI Agent</div><div style="font:400 12px/1.3 'Lato';color:var(--muted);">{{ gorgiasAiContactsLabel }} automated contacts · {{ gorgiasCpcLabel }} allocated each</div><div style="font:400 11px/1.3 'Lato';color:var(--muted);">{{ gorgiasAiContactsByChannelLabel }}</div></div>
           <div><div style="font:500 20px/1 'Playfair Display';color:var(--ink);">{{ gorgiasHelpdeskLabel }}</div><div style="font:700 11px/1.3 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--ai);margin-top:3px;">Helpdesk</div><div style="font:400 12px/1.3 'Lato';color:var(--muted);">Agent workspace and ticketing</div></div>
           <div><div style="font:500 20px/1 'Playfair Display';color:var(--ink);">{{ gorgiasSmsLabel }}</div><div style="font:700 11px/1.3 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--ai);margin-top:3px;">SMS</div><div style="font:400 12px/1.3 'Lato';color:var(--muted);">SMS plan fee</div></div>
         </div>
@@ -6910,7 +6922,7 @@ a:hover{color:var(--ink-deep);}
             </div>
             <div style="flex:1.3;min-height:0;margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
               <div style="display:flex;flex-direction:column;min-height:0;">
-                <div style="font:700 13px/1 'Lato';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Human vs. AI (Blended)</div>
+                <div style="font:700 13px/1 'Lato';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Human vs. Automated (Blended)</div>
                 <svg sc-camel-view-box="0 0 900 460" sc-camel-preserve-aspect-ratio="xMidYMid meet" style="display:block;width:100%;height:100%;font-family:'Lato',sans-serif;overflow:visible;flex:1;min-height:0;">
                   <g stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 6">
                     <line x1="120" y1="30" x2="860" y2="30"></line>
@@ -6980,7 +6992,7 @@ a:hover{color:var(--ink-deep);}
                   <span style="font:700 12px/1 'Lato';color:var(--ink-deep);">● Chat (Chatty)</span>
                   <span style="font:700 12px/1 'Lato';color:var(--ai);">● Email, Chat &amp; SMS (Gorgias)</span>
                   <span style="font:700 12px/1 'Lato';color:var(--phone-deep);">● Phone (FlipCX)</span>
-                  <span style="font:400 11px/1.3 'Lato';color:var(--muted);">· allocated cost per AI-resolved contact</span>
+                  <span style="font:400 11px/1.3 'Lato';color:var(--muted);">· allocated cost per automated contact</span>
                 </div>
               </div>
             </div>
@@ -7005,7 +7017,7 @@ a:hover{color:var(--ink-deep);}
 
       
 
-      <div style="text-align:center;font:400 12px/1.3 'Lato';color:var(--muted);margin-top:2px;">Platform costs pulled from the Call Center Activity sheet · Split by vendor using invoiced totals: Chatty (chat, through Aug 2026), Gorgias (Email, Chat &amp; SMS from Sep 2026, incl. Helpdesk &amp; SMS fees), FlipCX (phone)</div>
+      <div style="text-align:center;font:400 12px/1.3 'Lato';color:var(--muted);margin-top:2px;">Platform costs from the CX Metrics feed · Split by vendor using invoiced totals: Chatty (chat, through Aug 2026), Gorgias (Email, Chat &amp; SMS from Sep 2026, incl. Helpdesk &amp; SMS fees), FlipCX (phone)</div>
     </section>
 
     <section data-report-section="" data-screen-label="Cost &amp; ROI" ref="{{ roiSectionRef }}" style="height:100vh;overflow-y:auto;padding:14px 36px 8px;display:flex;flex-direction:column;gap:5px;box-sizing:border-box;scroll-snap-align:start;scroll-snap-stop:always;">
@@ -7064,7 +7076,7 @@ a:hover{color:var(--ink-deep);}
             <div style="height:100%;width:{{ marginCostSegPct }}%;background:var(--blended);display:flex;align-items:center;justify-content:center;"><span style="font:700 10px/1 'Lato';color:#fff;white-space:nowrap;overflow:hidden;">{{ marginCostDollarLabel }}</span></div>
             <div style="height:100%;width:{{ marginMarginSegPct }}%;background:var(--sage-deep);display:flex;align-items:center;justify-content:center;"><span style="font:700 10px/1 'Lato';color:#fff;white-space:nowrap;overflow:hidden;">{{ marginDollarLabel }}</span></div>
           </div>
-          <div style="display:flex;gap:10px;margin-top:4px;"><span style="font:700 10px/1 'Lato';color:var(--blended);">■ Huamn + AI Cost/contact</span><span style="font:700 10px/1 'Lato';color:var(--sage-deep);">■ Margin/contact</span></div>
+          <div style="display:flex;gap:10px;margin-top:4px;"><span style="font:700 10px/1 'Lato';color:var(--blended);">■ Human + AI Cost/contact</span><span style="font:700 10px/1 'Lato';color:var(--sage-deep);">■ Margin/contact</span></div>
         </div>
         <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 14px;">
           <div style="display:inline-block;background:#F5F2EE;border-radius:14px;padding:4px 11px;font:700 10px/1 'Lato';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">{{ annualizedBadgeHeader }}</div>
@@ -7246,7 +7258,7 @@ a:hover{color:var(--ink-deep);}
         </div>
       </sc-if>
 
-      <div style="text-align:center;font:400 12px/1.3 'Lato';color:var(--muted);margin-top:2px;">Cost per Contact from the Call Center Activity sheet · Revenue per Contact = revenue ÷ contacts · Margin/Contact = Revenue vs. Human + AI Cost, {{ roiLatestMonthLabel }} · BPO Human Cost = Grupo NOA agent labor &amp; bonuses only, excludes internal Contact Center staff</div>
+      <div style="text-align:center;font:400 12px/1.3 'Lato';color:var(--muted);margin-top:2px;">Cost per Contact from the CX Metrics feed · Revenue per Contact = revenue ÷ contacts · Margin/Contact = Revenue vs. Human + AI Cost, {{ roiLatestMonthLabel }} · BPO Human Cost = Grupo NOA agent labor &amp; bonuses only, excludes internal Contact Center staff</div>
     </section>
 
     <section data-report-section="" data-screen-label="Automation Projection" ref="{{ projSectionRef }}" style="flex-shrink:0;padding:24px 36px 32px;display:flex;flex-direction:column;gap:12px;min-height:100vh;box-sizing:border-box;border-top:1px solid var(--line);scroll-snap-align:start;scroll-snap-stop:always;">
@@ -7902,7 +7914,7 @@ a:hover{color:var(--ink-deep);}
         <sc-if value="{{ hasContactsSplit }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap;margin-top:10px;">
           <span style="display:inline-flex;align-items:center;gap:6px;font:700 13px/1.3 'Lato';color:var(--human-deep);"><span style="width:9px;height:9px;border-radius:50%;background:var(--human);flex-shrink:0;"></span>{{ humanPer100Label }} with a person</span>
-          <span style="display:inline-flex;align-items:center;gap:6px;font:700 13px/1.3 'Lato';color:var(--ai);"><span style="width:9px;height:9px;border-radius:50%;background:var(--ai);flex-shrink:0;"></span>{{ aiPer100Label }} handled by AI</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font:700 13px/1.3 'Lato';color:var(--ai);"><span style="width:9px;height:9px;border-radius:50%;background:var(--ai);flex-shrink:0;"></span>{{ aiPer100Label }} automated</span>
         </div>
         </sc-if>
         </div>
@@ -7936,10 +7948,10 @@ a:hover{color:var(--ink-deep);}
         <div style="display:flex;gap:18px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap;">
             <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Total Conversations</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ contactsTotalLabel }}</div></div>
             <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">With a Person</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ humanContactsTotal }}</div></div>
-            <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Handled by AI</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ aiContactsTotal }}</div></div>
+            <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Automated</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ aiContactsTotal }}</div></div>
             <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Orders (Web + Phone)</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ totalOrdersForRatio }}</div></div>
           </div>
-          <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:8px;">Conversations answered across Phone, Email, Chat and SMS (AI included) ÷ the sheet's "Total # Sales CC and Web" orders, × 100. Summed over the whole period before dividing. Lower means customers needed us less per order.</div>
+          <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:8px;">Conversations answered across Phone, Email, Chat and SMS (automated included) ÷ the sheet's "Total # Sales CC and Web" orders, × 100. Summed over the whole period before dividing. Lower means customers needed us less per order.</div>
         </sc-if>
         </div>
         <div data-exec-row="footer" style="margin-top:auto;">
@@ -7975,7 +7987,7 @@ a:hover{color:var(--ink-deep);}
 
     <div style="display:flex;justify-content:space-between;margin-top:18px;font:400 12px/1.3 'Lato';color:var(--muted);">
       <span>Detailed View shows the per-channel breakdown behind each number.</span>
-      <span>Updated monthly from operating data and vendor invoices.</span>
+      <span>Updated daily from the CX Metrics feed. Automation includes AI, flows and auto-responses, per Gorgias.</span>
     </div>
 
   </div>
@@ -8021,7 +8033,7 @@ a:hover{color:var(--ink-deep);}
     <div style="display:flex;flex-direction:column;gap:26px;">
       <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid #E1DACE;padding-bottom:18px;"><span style="font:700 26px/1 'Lato';color:#7A756C;width:48px;">01</span><span style="font:600 32px/1 'Playfair Display';">What We Did, What's Next, What's Tough</span></div>
       <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid #E1DACE;padding-bottom:18px;"><span style="font:700 26px/1 'Lato';color:#7A756C;width:48px;">02</span><span style="font:600 32px/1 'Playfair Display';">Contact Center Reporting</span></div>
-      <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid #E1DACE;padding-bottom:18px;"><span style="font:700 26px/1 'Lato';color:#7A756C;width:48px;">03</span><span style="font:600 32px/1 'Playfair Display';">BPO Human vs AI Automation</span></div>
+      <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid #E1DACE;padding-bottom:18px;"><span style="font:700 26px/1 'Lato';color:#7A756C;width:48px;">03</span><span style="font:600 32px/1 'Playfair Display';">BPO Human vs Automated</span></div>
       <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid #E1DACE;padding-bottom:18px;"><span style="font:700 26px/1 'Lato';color:#7A756C;width:48px;">04</span><span style="font:600 32px/1 'Playfair Display';">Revenue &amp; ROI</span></div>
       <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid #E1DACE;padding-bottom:18px;"><span style="font:700 26px/1 'Lato';color:#7A756C;width:48px;">05</span><span style="font:600 32px/1 'Playfair Display';">Channel Scorecards — Service &amp; Satisfaction</span></div>
       <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid #E1DACE;padding-bottom:18px;"><span style="font:700 26px/1 'Lato';color:#7A756C;width:48px;">06</span><span style="font:600 32px/1 'Playfair Display';">Channel Scorecards — Efficiency &amp; Revenue</span></div>
@@ -8182,7 +8194,7 @@ a:hover{color:var(--ink-deep);}
 
   <section data-label="Automation by Channel" data-speaker-notes="Auto-filled from the dashboard's live sheet data for the selected period." style="background:#F5F2EE;color:#1E1D1C;display:flex;flex-direction:column;padding:56px 80px;font-family:'Lato',sans-serif;box-sizing:border-box;gap:18px;">
     <div>
-      <h1 style="font:600 46px/1 'Playfair Display';color:#5F7D5E;margin:0;">Automation by Channel — BPO Human vs AI</h1>
+      <h1 style="font:600 46px/1 'Playfair Display';color:#5F7D5E;margin:0;">Automation by Channel — BPO Human vs Automated</h1>
       <div style="display:inline-block;background:#E8EFE6;border-radius:18px;padding:6px 16px;font:700 14px/1 'Lato';letter-spacing:.08em;text-transform:uppercase;color:#5F7D5E;margin-top:10px;">Contact Handling Split · {{ ccPeriodLabel }}</div>
     </div>
 <div style="flex:0 0 auto;background:#fff;border:1px solid #E1DACE;border-radius:16px;padding:16px 40px 22px;display:flex;flex-direction:column;justify-content:center;gap:16px;">
@@ -9443,17 +9455,17 @@ const REV_MOCK_ROWS = (() => {
 // visitors on this machine skip the passphrase gate until it expires.
 function readAuthCookie() {
   try {
-    const raw = localStorage.getItem('sh_auth');
+    const raw = localStorage.getItem('sh_auth_feed');
     if (!raw) return null;
     const obj = JSON.parse(raw);
     if (obj.exp && Date.now() < obj.exp) return obj;
-    localStorage.removeItem('sh_auth');
+    localStorage.removeItem('sh_auth_feed');
   } catch (e) {}
   return null;
 }
 function writeAuthCookie(url, email) {
   const exp = Date.now() + 30 * 24 * 60 * 60 * 1000;
-  try { localStorage.setItem('sh_auth', JSON.stringify({ url, email, exp })); } catch (e) {}
+  try { localStorage.setItem('sh_auth_feed', JSON.stringify({ url, email, exp })); } catch (e) {}
 }
 
 // AI Automation Detail / Chargeback Reporting numbers aren't on the ops sheet and their exact
@@ -9599,6 +9611,159 @@ function parsePhoneSalesMonthlyTotals(text) {
   }
   return out;
 }
+
+// ============================================================================================
+// CX Metrics JSON feed adapter (feed contract v1). The feed keys every metric by a permanent ID,
+// so nothing here depends on column names, order or formatting. The decrypted address decides the
+// source: a JSON response is the feed; anything else falls back to the legacy CSV parsers.
+// Scales: the feed sends ratios as 0-1 and CSAT as 1-5; the cards expect percents (0-100) and,
+// for Gorgias channels, CSAT x 20 - converted here. Missing values: row-model fields become 0
+// (as the CSV parser did); scorecard fields become null (as fetchScorecardRows did).
+// ============================================================================================
+const FEED_MIN_VERSION = 1;
+function feedIsJson(text) { return /^\s*\{/.test(text || ''); }
+function feedParse(text) {
+  const feed = JSON.parse(text);
+  if (!feed || !Array.isArray(feed.months) || !(feed.version >= FEED_MIN_VERSION)) throw new Error('feed not recognized');
+  const ageH = (Date.now() - Date.parse(feed.generated_at)) / 3600000;
+  if (ageH > (feed.stale_after_hours || 36)) console.warn('CX Metrics feed is ' + Math.round(ageH) + ' hours old');
+  return feed;
+}
+function feedLocalDate(ymd) { const p = String(ymd).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+
+
+// Definition breaks from the feed: a YoY/MoM comparison whose two windows sit on opposite sides of a
+// field's break keeps its number but gets a " †" footnote (explained in the page footer).
+let FEED_BREAKS_RUNTIME = [];
+const FEED_FIELD_IDS = { emailVol: 'email_sent', chatVol: 'chat_created', smsVol: 'sms_conversations',
+  totalContactsAllChannels: 'contacts_total', chatOrders: 'chat_sales_revenue',
+  agentCostPerContact: 'cost_per_contact_human', aiCostPerContact: 'cost_per_contact_ai', blendedCostPerContact: 'cost_per_contact_blended' };
+function feedBreakIdx(field) {
+  const id = FEED_FIELD_IDS[field]; if (!id) return null;
+  const b = FEED_BREAKS_RUNTIME.find(x => (x.ids || []).indexOf(id) >= 0);
+  return b ? monthIdx(formatMonthLabel(b.from)) : null;
+}
+function feedCrosses(field, rowsA, rowsB) {
+  const k = feedBreakIdx(field); if (k == null) return false;
+  const side = rs => { const ms = (rs || []).filter(Boolean).map(r => monthIdx(r.month)); return { pre: ms.some(m => m < k), post: ms.some(m => m >= k) }; };
+  const a = side(rowsA), b = side(rowsB);
+  return (a.post && b.pre) || (a.pre && b.post);
+}
+function feedDagger(label, crosses) { return label && crosses ? label + ' †' : label; }
+
+function feedToRows(feed) {
+  const z = x => (x == null || isNaN(Number(x)) ? 0 : Number(x));
+  const pct = x => (x == null ? 0 : Number(x) * 100);
+  const nul = x => (x == null ? null : Number(x));
+  const rows = feed.months.filter(m => z(m.values.voice_calls_answered_total) > 0).map(m => {
+    const v = m.values;
+    const gTotal = z(v.cost_gorgias) || (z(v.cost_gorgias_ai) + z(v.cost_gorgias_helpdesk) + z(v.cost_gorgias_sms));
+    const aiCh = z(v.cost_gorgias_ai_chat), aiEm = z(v.cost_gorgias_ai_email), aiSm = z(v.cost_gorgias_ai_sms);
+    const cCh = z(v.chat_ai_contacts), cEm = z(v.email_ai_contacts), cSm = z(v.sms_ai_contacts);
+    const sheetAi = z(v.cost_ai_platform);
+    return {
+      month: formatMonthLabel(m.month),
+      emailVol: z(v.email_sent), emailAuto: pct(v.email_automation_rate), // Gorgias overall-automation-rate, as pulled
+      voiceVol: z(v.voice_calls_answered_total), voiceAuto: pct(v.flip_automation_rate),
+      chatVol: z(v.chat_created), chatAuto: pct(v.chat_automation_rate), chatAutoResolved: nul(v.chat_ai_automated),
+      smsVol: z(v.sms_conversations), smsAuto: pct(v.sms_automation_rate), // Gorgias overall-automation-rate, as pulled
+      phoneOrders: z(v.phone_new_revenue), rebill: z(v.phone_rebill_revenue), chatOrders: z(v.chat_sales_revenue),
+      aov: z(v.phone_aov), revenuePerCall: z(v.revenue_per_call), ccTotalRevenue: z(v.cc_revenue),
+      totalActiveSubs: z(v.subs_active_legacy), canceledSubs: z(v.subs_canceled_legacy),
+      savedSubsSTS: z(v.voice_sub_saves), stsSavePct: pct(v.voice_sub_save_rate), subCancelCalls: z(v.voice_sub_cancel_calls),
+      agentCostPerContact: z(v.cost_per_contact_human), aiCostPerContact: z(v.cost_per_contact_ai), blendedCostPerContact: z(v.cost_per_contact_blended),
+      totalContactsAllChannels: z(v.contacts_total), totalContactsHumanOnly: z(v.contacts_human),
+      aiPlatformCostTotal: !gTotal ? sheetAi : Math.max(sheetAi, z(v.cost_flipcx) + z(v.cost_chatty) + gTotal),
+      gorgiasCostPerAutomatedContact: z(v.cost_per_ai_contact_gorgias),
+      dialpadExpense: z(v.cost_dialpad), pciPalExpense: z(v.cost_pcipal),
+      ccBudgetMonthly: null, // budget stays a PC-only manual input
+      gorgiasHumanShare: gTotal ? Math.max(0, gTotal - (aiCh + aiEm + aiSm)) : 0,
+      grupoNoaLaborCostTotal: z(v.cost_labor),
+      flipCxCostActual: z(v.cost_flipcx), chattyCostActual: z(v.cost_chatty), // 0, not null: the dashboard treats null as 'estimate the split' gorgiasCostActual: gTotal,
+      gorgiasAiContactsAll: cCh + cEm + cSm, totalBonusPayout: z(v.bonus_payout_total),
+      chattyCostPerAiChat: z(v.cost_per_ai_chat_chatty_legacy), flipCostPerAutomatedCall: z(v.cost_per_automated_call_flipcx),
+      chattyCostRaw: z(v.cost_chatty), gorgiasAiSpend: z(v.cost_gorgias_ai),
+      gorgiasAiCostChat: aiCh, gorgiasAiCostEmail: aiEm, gorgiasAiCostSms: aiSm,
+      gorgiasAiContactsChat: cCh, gorgiasAiContactsEmail: cEm, gorgiasAiContactsSms: cSm,
+      gorgiasCostPerChat: cCh ? aiCh / cCh : 0, gorgiasCostPerEmail: cEm ? aiEm / cEm : 0, gorgiasCostPerSms: cSm ? aiSm / cSm : 0,
+      gorgiasHelpdeskExpense: z(v.cost_gorgias_helpdesk), gorgiasSmsExpense: z(v.cost_gorgias_sms), gorgiasTotalExpense: gTotal,
+      omniAutomationRate: pct(v.automation_rate_omni),
+    };
+  });
+  return rows.length ? rows : null;
+}
+
+function feedToScorecards(feed) {
+  const n = x => (x == null || isNaN(Number(x)) || Number(x) === 0 ? null : Number(x)); // same as the CSV path: 0 reads as missing
+  const p = x => (n(x) == null ? null : Number(x) * 100);
+  const c20 = x => (n(x) == null ? null : Number(x) * 20);
+  const first = (...xs) => { for (const x of xs) if (x != null) return x; return null; };
+  return feed.months.filter(m => Number(m.values.voice_calls_answered_total) > 0).map(m => {
+    const v = m.values;
+    const csat = [n(v.voice_csat), n(v.voice_csat_sales_legacy)].filter(x => x != null);
+    return {
+      month: formatMonthLabel(m.month),
+      voiceSla: p(v.voice_sla_pct), voiceAbandon: p(v.voice_true_abandon_rate),
+      phoneCsat: csat.length ? csat.reduce((a, b) => a + b, 0) / csat.length : null,
+      phoneRevenue: n(v.phone_new_revenue), phoneAov: n(v.phone_aov),
+      emailSla: p(v.email_sla_pct), emailAht: first(n(v.email_human_frt_avg_min), n(v.email_frt_avg_min_legacy)),
+      emailFcr: first(p(v.email_one_touch_rate), p(v.email_fcr_legacy)), emailCsat: first(c20(v.email_csat), p(v.digital_csat_legacy)),
+      chatSla: p(v.chat_sla_pct), chatAht: first(n(v.chat_human_frt_avg_min), n(v.chat_frt_avg_min_legacy)),
+      chatFcr: first(p(v.chat_one_touch_rate), p(v.chat_fcr_legacy)), chatRevenue: n(v.chat_sales_revenue), chatAov: n(v.chat_sales_aov),
+      smsSla: p(v.sms_sla_pct), smsAht: first(n(v.sms_human_frt_avg_min), n(v.sms_frt_avg_min_legacy)),
+      smsFcr: first(p(v.sms_one_touch_rate), p(v.sms_fcr_legacy)),
+      contactsPerOrder: n(v.contacts_per_order),
+      contactsPerOrderHuman: (n(v.contacts_human) != null && n(v.company_orders_ex_amazon)) ? Number(v.contacts_human) / Number(v.company_orders_ex_amazon) : null,
+      totalShSales: n(v.company_sales), totalOrdersCcAndWeb: n(v.company_orders_ex_amazon),
+      emailResolution: first(n(v.email_resolution_median_min), n(v.email_resolution_avg_min_legacy)),
+      chatResolution: n(v.chat_resolution_min_legacy), smsResolution: n(v.sms_resolution_avg_min_legacy),
+      chatConversion: (n(v.chat_sales_orders) != null && n(v.chat_created)) ? Number(v.chat_sales_orders) / Number(v.chat_created) * 100 : null,
+      voiceAsaSales: n(v.voice_asa_sales_sec_legacy), voiceAsaCs: n(v.voice_asa_sec), phoneAht: n(v.voice_aht_min),
+      emailHandleSec: n(v.email_handle_sec), smsHandleSec: n(v.sms_handle_sec), chatHandleSec: n(v.chat_handle_sec),
+      chatCsat: c20(v.chat_csat), smsCsat: null,
+    };
+  });
+}
+
+function feedToPhoneSales(feed) {
+  const ps = feed.phone_sales || { periods: [], months: [] };
+  const z = x => (x == null ? 0 : Number(x));
+  const periods = ps.periods.map(r => ({
+    start: feedLocalDate(r.start), end: feedLocalDate(r.end), days: z(r.days), isSale: !!r.sale, campaign: r.campaign || '',
+    revenue: z(r.revenue), avgRevPerDay: z(r.revenue_per_day), aov: z(r.aov), conversion: z(r.conversion) * 100,
+    orderCount: z(r.orders), avgOrdersPerDay: z(r.orders_per_day) }));
+  const monthly = ps.months.filter(r => z(r.revenue) > 0).map(r => {
+    const mi = Number(String(r.month).slice(5, 7)) - 1;
+    return { month: SHORT_MONTH_ABBR[mi] + ' ' + String(r.month).slice(0, 4), aov: z(r.aov), conversion: z(r.conversion) * 100 };
+  });
+  return { periods, monthly };
+}
+
+
+// Contact Handling Split: a label stays inside its bar segment only if it fits the segment's actual width;
+// otherwise it moves to the column right of the bar, in the segment's color. Measured, so labels are never
+// clipped at any screen or projector size.
+function fitSplitLabels() {
+  document.querySelectorAll('[data-split-row]').forEach(row => {
+    const out = row.querySelector('[data-split-out]'); if (!out) return;
+    const parts = [];
+    row.querySelectorAll('[data-split-label]').forEach(sp => {
+      sp.style.display = 'inline';
+      const seg = sp.parentElement, pct = parseFloat(sp.textContent);
+      const fits = seg.clientWidth > 0 && sp.offsetWidth <= seg.clientWidth - 2;
+      if (!fits) { sp.style.display = 'none'; if (pct >= 0.5) parts.push({ t: sp.textContent.trim(), c: sp.dataset.outColor }); }
+    });
+    const html = parts.map((p, i) => '<span style="color:' + p.c + '">' + (i ? ' \u00b7 ' : '') + p.t + '</span>').join('');
+    if (out.innerHTML !== html) out.innerHTML = html; // only touch the DOM when the result changes (no observer loop)
+  });
+}
+(function () {
+  let t = null; const run = () => { clearTimeout(t); t = setTimeout(fitSplitLabels, 60); };
+  window.addEventListener('resize', run); window.addEventListener('load', run);
+  const start = () => new MutationObserver(run).observe(document.body, { childList: true, subtree: true, characterData: true });
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
+
 // Guards against a request that never resolves (seen intermittently on the published-sheet
 // endpoint) by aborting it after 8s so callers' own retry/error handling actually gets to run.
 function fetchWithTimeout(url, opts, ms = 20000) {
@@ -9703,9 +9868,9 @@ class Component extends DCLogic {
 
   // Sheet URL kept AES-GCM encrypted at rest; only decrypted client-side after the correct
   // passphrase is entered, so the page starts blank and never fetches until unlocked.
-  static ENC_SALT = 't8A8nn8PQc0hurSsIWrjWw==';
-  static ENC_IV = 'VXVtAQnwfoVlJaFg';
-  static ENC_CT = 'UcaVySiMiwVakjQ/Eoososb+QmP3CIY4GqjTQVIln8xP7H1yn72HNKGd1HPZ/RTkD0WPBsNG4Ne6DJYTF2eLQZPO4RGTRi0jys7cGVTVrFTXvMuIie0XA/q88WfvidE+K5dI8otIT9wqNWr70ulnkVT2AB+cUZCE2YB75WI7dVQ3VWthSeBwZ97n7hGIWzwX9kDTaLTslHgAegor8dY=';
+  static ENC_SALT = 'QXHmMA+CKw5gNkzupBapvQ==';
+  static ENC_IV = '6CxwwvXaqWmzAkgg';
+  static ENC_CT = 'vs7m1xrFBO+9I8AA1+9I8dlKXJQtBREmie12E36xVrFyFWVlsKe5nwK1YYdi/zsKqJK0kuHYLaLBrj+sd1uXmtVFay13lIQpGe9yqCM/3Jlz3iBQQSu1kD9aKbkQSVoZgh61sY1e9zKoZ0Cx41huI77iRG518znLY33EzSigxoTgH56phw0bMaDkwsJL4hCl73tXeGRRTuYl84jytFbRaPYTAQl78975EJQBxX8gF6GHu9boqn/qikvH/RY63/MA7PAgvja52LHU';
 
   b64ToBuf(b64) { return Uint8Array.from(atob(b64), c => c.charCodeAt(0)); }
 
@@ -9724,7 +9889,7 @@ class Component extends DCLogic {
   onEmailInput = (e) => this.setState({ emailInput: e.target.value, passError: false });
 
   clearSession = () => {
-    try { localStorage.removeItem('sh_auth'); } catch (e) {}
+    try { localStorage.removeItem('sh_auth_feed'); } catch (e) {}
     this._decryptedSheetUrl = null;
     this.setState({ unlocked: false, passInput: '', emailInput: '', passError: false, loggedInEmail: null, reportingToolsOpen: false });
   };
@@ -10570,7 +10735,9 @@ class Component extends DCLogic {
       const res = await fetchWithTimeout(url, { cache: 'no-store' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const text = await res.text();
-      const rows = parseCsvText(text);
+      let rows;
+      if (feedIsJson(text)) { this._feed = feedParse(text); FEED_BREAKS_RUNTIME = this._feed.breaks || []; rows = feedToRows(this._feed); } // CX Metrics JSON feed
+      else { this._feed = null; FEED_BREAKS_RUNTIME = []; rows = parseCsvText(text); }                                  // legacy published CSV
       if (!rows) throw new Error('columns not recognized');
       clearTimeout(this._bgRetryTimer);
       this.setState({ rows, loading: false, lastFetched: new Date() });
@@ -10592,6 +10759,7 @@ class Component extends DCLogic {
   ensurePhoneSalesLoaded = (attempt = 0) => {
     if (this.state.phoneSales || this.state.phoneSalesLoading) return;
     this.setState({ phoneSalesLoading: true, phoneSalesError: null });
+    if (this._feed) { const ps = feedToPhoneSales(this._feed); this.setState({ phoneSales: ps.periods, phoneSalesMonthly: ps.monthly, phoneSalesLoading: false }); return; }
     fetchWithTimeout(PHONE_SALES_CSV_URL, { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
       .then(text => this.setState({ phoneSales: parsePhoneSalesCsv(text), phoneSalesMonthly: parsePhoneSalesMonthlyTotals(text), phoneSalesLoading: false }))
       .catch(err => {
@@ -10606,7 +10774,7 @@ class Component extends DCLogic {
   ensureScorecardsLoaded = (attempt = 0) => {
     if (this.state.scorecards || this.state.scorecardsLoading || !this._decryptedSheetUrl) return;
     this.setState({ scorecardsLoading: true, scorecardsError: null });
-    fetchScorecardRows(this._decryptedSheetUrl).then(rows => {
+    (this._feed ? Promise.resolve(feedToScorecards(this._feed)) : fetchScorecardRows(this._decryptedSheetUrl)).then(rows => {
       const target = (this.state.rows || FALLBACK_ROWS).slice(-1)[0].month;
       const row = rows.find(r => r.month === target) || rows[rows.length - 1];
       const idx = rows.indexOf(row);
@@ -11072,13 +11240,13 @@ class Component extends DCLogic {
     const ccGrandYoYPct = volPct(grandTotal, pyGrandTotalVol);
     const ccGrandYoYArrow = ccGrandYoYPct == null || ccGrandYoYPct >= 0 ? '\u25b2' : '\u25bc';
     const ccGrandYoYColor = ccGrandYoYPct == null || ccGrandYoYPct >= 0 ? 'var(--sage-deep)' : '#AF4848';
-    const ccGrandYoYRest = hasCcGrandYoY ? volChange(grandTotal, pyGrandTotalVol, ccGrandYoYPct) + ' YoY' : null;
+    const ccGrandYoYRest = hasCcGrandYoY ? feedDagger(volChange(grandTotal, pyGrandTotalVol, ccGrandYoYPct) + ' YoY', feedCrosses('totalContactsAllChannels', trailing, priorYearVol)) : null;
     const ccGrandCurrAvg = grandTotal / n, ccGrandPrevAvg = pyPrevGrandTotalVol / prevVolN;
     const hasCcGrandMoM = momAllowedVol && (!ccFilter.isCustom || prevWindowVol.length === trailing.length) && prevWindowVol.length > 0 && ccGrandPrevAvg > 0;
     const ccGrandMoMPct = volPct(ccGrandCurrAvg, ccGrandPrevAvg);
     const ccGrandMoMArrow = ccGrandMoMPct == null || ccGrandMoMPct >= 0 ? '\u25b2' : '\u25bc';
     const ccGrandMoMColor = ccGrandMoMPct == null || ccGrandMoMPct >= 0 ? 'var(--sage-deep)' : '#AF4848';
-    const ccGrandMoMRest = hasCcGrandMoM ? volChange(ccGrandCurrAvg, ccGrandPrevAvg, ccGrandMoMPct) + (momIsPriorPeriodVol ? ' vs Prior Period' : ' MoM') : null;
+    const ccGrandMoMRest = hasCcGrandMoM ? feedDagger(volChange(ccGrandCurrAvg, ccGrandPrevAvg, ccGrandMoMPct) + (momIsPriorPeriodVol ? ' vs Prior Period' : ' MoM'), feedCrosses('totalContactsAllChannels', trailing, prevWindowVol)) : null;
     const volFields = { email: 'emailVol', voice: 'voiceVol', chat: 'chatVol', sms: 'smsVol' };
     const volBadges = {};
     const momVolSuffix = momIsPriorPeriodVol ? ' vs Prior Period' : ' MoM';
@@ -11088,8 +11256,8 @@ class Component extends DCLogic {
       const hasYoYHere = hasVolYoY && pyVolTotals[key] > 0;
       const hasMoMHere = momAllowedVol && (!ccFilter.isCustom || prevWindowVol.length === trailing.length) && prevWindowVol.length > 0 && prevAvg > 0;
       volBadges[key] = {
-        hasYoY: hasYoYHere, yoyLabel: volYoYLabel(totals[key], pyVolTotals[key]), yoyColor: volColor(totals[key], pyVolTotals[key]),
-        hasMoM: hasMoMHere, momLabel: volMoMLabelHere(currAvg, prevAvg), momColor: volColor(currAvg, prevAvg),
+        hasYoY: hasYoYHere, yoyLabel: feedDagger(volYoYLabel(totals[key], pyVolTotals[key]), feedCrosses(volFields[key], trailing, priorYearVol)), yoyColor: volColor(totals[key], pyVolTotals[key]),
+        hasMoM: hasMoMHere, momLabel: feedDagger(volMoMLabelHere(currAvg, prevAvg), feedCrosses(volFields[key], trailing, prevWindowVol)), momColor: volColor(currAvg, prevAvg),
         hasAny: hasYoYHere || hasMoMHere, hasBoth: hasYoYHere && hasMoMHere,
       };
     });
@@ -11180,15 +11348,12 @@ class Component extends DCLogic {
     const chFullPts = (yKey) => window_.map((r,i) => chFullXFor(i) + ',' + chYForFull(r[yKey]).toFixed(2)).join(' ');
 
     // Spread overlapping line-end labels apart (min 16px) while keeping their average position.
+    // Spread line-end labels at least 24px apart, then shift the group back inside the plot (never below 0%).
     const MIN_GAP = 24;
-    const endLabels = [
+    const endY = resolveLabelYsCh([
       { key: 'chat', y: lastPoint.chatY }, { key: 'voice', y: lastPoint.voiceY },
       { key: 'email', y: lastPoint.emailY }, { key: 'sms', y: lastPoint.smsY },
-    ].sort((a, b) => a.y - b.y);
-    for (let i = 1; i < endLabels.length; i++) {
-      if (endLabels[i].y - endLabels[i-1].y < MIN_GAP) endLabels[i].y = endLabels[i-1].y + MIN_GAP;
-    }
-    const endY = {}; endLabels.forEach(l => { endY[l.key] = l.y; });
+    ], MIN_GAP, yFor(100) + 4, yFor(0) + 4);
 
     const activeSection = this.state.activeSection;
 
@@ -11206,14 +11371,10 @@ class Component extends DCLogic {
     }));
     const deckPtsStr = (yKey) => deckWindow.map((r, i) => deckXFor(i) + ',' + yFor(r[yKey]).toFixed(2)).join(' ');
     const deckLastPoint = deckWindow.length ? { x: deckXFor(deckCount - 1), chatY: yFor(deckWindow[deckCount-1].chatAuto), voiceY: yFor(deckWindow[deckCount-1].voiceAuto), emailY: yFor(deckWindow[deckCount-1].emailAuto), smsY: yFor(deckWindow[deckCount-1].smsAuto) } : { x: 695, chatY: 200, voiceY: 250, emailY: 355, smsY: 350 };
-    const deckEndLabels = [
+    const deckEndY = resolveLabelYsCh([
       { key: 'chat', y: deckLastPoint.chatY }, { key: 'voice', y: deckLastPoint.voiceY },
       { key: 'email', y: deckLastPoint.emailY }, { key: 'sms', y: deckLastPoint.smsY },
-    ].sort((a, b) => a.y - b.y);
-    for (let i = 1; i < deckEndLabels.length; i++) {
-      if (deckEndLabels[i].y - deckEndLabels[i-1].y < MIN_GAP) deckEndLabels[i].y = deckEndLabels[i-1].y + MIN_GAP;
-    }
-    const deckEndY = {}; deckEndLabels.forEach(l => { deckEndY[l.key] = l.y; });
+    ], MIN_GAP, yFor(100) + 4, yFor(0) + 4);
 
     return {
       error: this.state.error,
@@ -11224,7 +11385,7 @@ class Component extends DCLogic {
       lastFetchedLabel: this.state.lastFetched ? this.state.lastFetched.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : null,
       // Hand-set whenever a structural/logic change ships (not auto-derived) — distinct from "Page
       // checked", which is about the DATA refresh, not the dashboard's own construction.
-      dashboardBuildDateLabel: 'Sep 4, 2026', // bump on each standalone export
+      dashboardBuildDateLabel: 'Nov 7, 2026', // bump on each standalone export
       goToExecSummary: this.goToExecSummary, execNavBg: this.state.showExecSummary ? 'rgba(95,125,94,.28)' : 'transparent',
       showExecSummary: this.state.showExecSummary,
       ...this.renderExecSummaryVals(this.state.rows || FALLBACK_ROWS, this.state.scorecards ? this.state.scorecards.fullHistory : null, trailingMonths),
@@ -11780,12 +11941,12 @@ class Component extends DCLogic {
       hasHumanCpcSpark: humanCpcSpark.has, humanCpcSparkPoints: humanCpcSpark.points, humanCpcSparkColor: humanCpcSpark.color, humanCpcSparkList: humanCpcSpark.list,
       hasAiCpcSpark: aiCpcSpark.has, aiCpcSparkPoints: aiCpcSpark.points, aiCpcSparkColor: aiCpcSpark.color, aiCpcSparkList: aiCpcSpark.list,
       hasAllInCpcSpark: allInCpcSpark.has, allInCpcSparkPoints: allInCpcSpark.points, allInCpcSparkColor: allInCpcSpark.color, allInCpcSparkList: allInCpcSpark.list,
-      hasHumanMoM: showMoM && !!prev, humanMoMLabel: prev && momLabel(latest.agentCostPerContact, prev.agentCostPerContact), humanMoMColor: prev && momColorInverse(latest.agentCostPerContact, prev.agentCostPerContact),
-      hasAiMoM: showMoM && !!prev, aiMoMLabel: prev && momLabel(latest.aiCostPerContact, prev.aiCostPerContact), aiMoMColor: prev && momColorInverse(latest.aiCostPerContact, prev.aiCostPerContact),
-      hasAllInMoM: showMoM && !!prev, allInMoMLabel: prev && momLabel(latest.blendedCostPerContact, prev.blendedCostPerContact), allInMoMColor: prev && momColorInverse(latest.blendedCostPerContact, prev.blendedCostPerContact),
-      hasHumanYoY: hasYoYData && pyHuman > 0, humanYoYLabel: momLabel(ttmHuman, pyHuman) && momLabel(ttmHuman, pyHuman).replace('MoM','YoY'), humanYoYColor: momColorInverse(ttmHuman, pyHuman),
-      hasAiYoY: hasYoYData && pyAi > 0, aiYoYLabel: momLabel(ttmAi, pyAi) && momLabel(ttmAi, pyAi).replace('MoM','YoY'), aiYoYColor: momColorInverse(ttmAi, pyAi),
-      hasAllInYoY: hasYoYData && pyBlended > 0, allInYoYLabel: momLabel(ttmBlended, pyBlended) && momLabel(ttmBlended, pyBlended).replace('MoM','YoY'), allInYoYColor: momColorInverse(ttmBlended, pyBlended),
+      hasHumanMoM: showMoM && !!prev, humanMoMLabel: feedDagger(prev && momLabel(latest.agentCostPerContact, prev.agentCostPerContact), feedCrosses('agentCostPerContact', [latest], [prev])), humanMoMColor: prev && momColorInverse(latest.agentCostPerContact, prev.agentCostPerContact),
+      hasAiMoM: showMoM && !!prev, aiMoMLabel: feedDagger(prev && momLabel(latest.aiCostPerContact, prev.aiCostPerContact), feedCrosses('aiCostPerContact', [latest], [prev])), aiMoMColor: prev && momColorInverse(latest.aiCostPerContact, prev.aiCostPerContact),
+      hasAllInMoM: showMoM && !!prev, allInMoMLabel: feedDagger(prev && momLabel(latest.blendedCostPerContact, prev.blendedCostPerContact), feedCrosses('blendedCostPerContact', [latest], [prev])), allInMoMColor: prev && momColorInverse(latest.blendedCostPerContact, prev.blendedCostPerContact),
+      hasHumanYoY: hasYoYData && pyHuman > 0, humanYoYLabel: feedDagger(momLabel(ttmHuman, pyHuman) && momLabel(ttmHuman, pyHuman).replace('MoM','YoY'), feedCrosses('agentCostPerContact', isCustomBadgesEarly ? trailing : [latest], isCustomBadgesEarly ? priorYearWindow : [priorYearSingle])), humanYoYColor: momColorInverse(ttmHuman, pyHuman),
+      hasAiYoY: hasYoYData && pyAi > 0, aiYoYLabel: feedDagger(momLabel(ttmAi, pyAi) && momLabel(ttmAi, pyAi).replace('MoM','YoY'), feedCrosses('aiCostPerContact', isCustomBadgesEarly ? trailing : [latest], isCustomBadgesEarly ? priorYearWindow : [priorYearSingle])), aiYoYColor: momColorInverse(ttmAi, pyAi),
+      hasAllInYoY: hasYoYData && pyBlended > 0, allInYoYLabel: feedDagger(momLabel(ttmBlended, pyBlended) && momLabel(ttmBlended, pyBlended).replace('MoM','YoY'), feedCrosses('blendedCostPerContact', isCustomBadgesEarly ? trailing : [latest], isCustomBadgesEarly ? priorYearWindow : [priorYearSingle])), allInYoYColor: momColorInverse(ttmBlended, pyBlended),
       hasHumanBadge: (showMoM && !!prev) || (hasYoYData && pyHuman > 0), hasBothHumanBadge: showMoM && !!prev && hasYoYData && pyHuman > 0,
       humanMoMDividerStyle: (showMoM && !!prev && hasYoYData && pyHuman > 0) ? 'border-left:1px solid var(--line);padding-left:6px;' : '',
       hasAiBadge: (showMoM && !!prev) || (hasYoYData && pyAi > 0), hasBothAiBadge: showMoM && !!prev && hasYoYData && pyAi > 0,
@@ -13029,10 +13190,10 @@ class Component extends DCLogic {
       totalImpactMoMDividerStyle: (hasYoY && hasRevMoM) ? 'border-left:1px solid var(--line);padding-left:6px;' : '',
       totalImpactYoYArrow: yoyArrow(grandTotal + subRevenueSavedEst, pyGrandTotal + subYoYRevenueSaved),
       totalImpactYoYColor: yoyColor(grandTotal + subRevenueSavedEst, pyGrandTotal + subYoYRevenueSaved),
-      totalImpactYoYRest: (yoyRest(grandTotal + subRevenueSavedEst, pyGrandTotal + subYoYRevenueSaved) || '').replace('Revenue', ''),
+      totalImpactYoYRest: feedDagger((yoyRest(grandTotal + subRevenueSavedEst, pyGrandTotal + subYoYRevenueSaved) || '').replace('Revenue', ''), feedCrosses('chatOrders', (typeof trailing !== 'undefined' ? trailing : []), (typeof priorYear !== 'undefined' ? priorYear : []))),
       totalImpactMoMArrow: yoyArrow(grandTotal / n + subRevenueSavedEst / n, revPrevMonth + (prevN > 0 ? subPriorRevenueSaved / prevN : 0)),
       totalImpactMoMColor: yoyColor(grandTotal / n + subRevenueSavedEst / n, revPrevMonth + (prevN > 0 ? subPriorRevenueSaved / prevN : 0)),
-      totalImpactMoMRest: momRest(grandTotal / n + subRevenueSavedEst / n, revPrevMonth + (prevN > 0 ? subPriorRevenueSaved / prevN : 0), '', momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'),
+      totalImpactMoMRest: feedDagger(momRest(grandTotal / n + subRevenueSavedEst / n, revPrevMonth + (prevN > 0 ? subPriorRevenueSaved / prevN : 0), '', momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), feedCrosses('chatOrders', (typeof trailing !== 'undefined' ? trailing : []), (typeof prevWindow !== 'undefined' ? prevWindow : []))),
       revYearTotalLabel: money((grandTotal / n) * 12),
       revRevenueTitle: n === 1 && trailing[0] ? trailing[0].month + ' Generated Revenue' : 'Average Generated Revenue Per Month',
       revAovTitle: n === 1 && trailing[0] ? trailing[0].month + ' Average Order Value' : 'Average Order Value',
@@ -13062,16 +13223,16 @@ class Component extends DCLogic {
       aovDeltaColor: aovDelta >= 0 ? 'var(--sage-deep)' : '#AF4848',
 
       hasYoY: hasYoY,
-      revTotalYoYLabel: 'Revenue ' + (yoyLabel(grandTotal, pyGrandTotal) || ''), revTotalYoYColor: yoyColor(grandTotal, pyGrandTotal),
-      revTotalYoYArrow: yoyArrow(grandTotal, pyGrandTotal), revTotalYoYRest: yoyRest(grandTotal, pyGrandTotal),
+      revTotalYoYLabel: 'Revenue ' + (feedDagger(yoyLabel(grandTotal, pyGrandTotal), feedCrosses('chatOrders', (typeof trailing !== 'undefined' ? trailing : []), (typeof priorYear !== 'undefined' ? priorYear : []))) || ''), revTotalYoYColor: yoyColor(grandTotal, pyGrandTotal),
+      revTotalYoYArrow: yoyArrow(grandTotal, pyGrandTotal), revTotalYoYRest: feedDagger(yoyRest(grandTotal, pyGrandTotal), feedCrosses('chatOrders', (typeof trailing !== 'undefined' ? trailing : []), (typeof priorYear !== 'undefined' ? priorYear : []))),
       phoneYoYLabel: yoyLabel(totals.phone, pyTotals.phone), phoneYoYColor: yoyColor(totals.phone, pyTotals.phone),
       rebillYoYLabel: yoyLabel(totals.rebill, pyTotals.rebill), rebillYoYColor: yoyColor(totals.rebill, pyTotals.rebill),
-      chatYoYLabel: yoyLabel(totals.chat, pyTotals.chat), chatYoYColor: yoyColor(totals.chat, pyTotals.chat),
+      chatYoYLabel: feedDagger(yoyLabel(totals.chat, pyTotals.chat), feedCrosses('chatOrders', trailing, priorYear)), chatYoYColor: yoyColor(totals.chat, pyTotals.chat),
       aovYoYLabel: yoyLabel(aovAvg, pyAovAvg), aovYoYColor: yoyColor(aovAvg, pyAovAvg),
       aovYoYArrow: yoyArrow(aovAvg, pyAovAvg), aovYoYRest: (yoyRest(aovAvg, pyAovAvg) || '').replace('Revenue', ''),
 
       revMoMSuffix: momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM',
-      hasRevMoM, revMoMColor: yoyColor(revLatest, revPrevMonth), revMoMArrow: yoyArrow(revLatest, revPrevMonth), revMoMRest: momRest(revLatest, revPrevMonth, 'Revenue', momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'),
+      hasRevMoM, revMoMColor: yoyColor(revLatest, revPrevMonth), revMoMArrow: yoyArrow(revLatest, revPrevMonth), revMoMRest: feedDagger(momRest(revLatest, revPrevMonth, 'Revenue', momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), feedCrosses('chatOrders', (typeof trailing !== 'undefined' ? trailing : []), (typeof prevWindow !== 'undefined' ? prevWindow : []))),
       hasAovMoM, aovMoMColor: yoyColor(aovLatest, aovPrevMonth), aovMoMArrow: yoyArrow(aovLatest, aovPrevMonth), aovMoMRest: momRest(aovLatest, aovPrevMonth, '', momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'),
       hasAnyRevBadge, hasBothRevBadge, hasAnyAovBadge, hasBothAovBadge,
       aovMoMDividerStyle: hasBothAovBadge ? 'border-left:1px solid var(--line);padding-left:6px;' : '',
@@ -13082,7 +13243,7 @@ class Component extends DCLogic {
       hasPhoneYoY, hasRebillYoY, hasChatYoY,
       hasPhoneMoM, phoneMoMLabel: momChip(phoneLatest, phonePrevMonth, momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), phoneMoMColor: yoyColor(phoneLatest, phonePrevMonth),
       hasRebillMoM, rebillMoMLabel: momChip(rebillLatest, rebillPrevMonth, momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), rebillMoMColor: yoyColor(rebillLatest, rebillPrevMonth),
-      hasChatMoM, chatMoMLabel: momChip(chatLatest, chatPrevMonth, momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), chatMoMColor: yoyColor(chatLatest, chatPrevMonth),
+      hasChatMoM, chatMoMLabel: feedDagger(momChip(chatLatest, chatPrevMonth, momIsPriorPeriodRev ? ' vs Prior Period' : ' MoM'), feedCrosses('chatOrders', trailing, prevWindow)), chatMoMColor: yoyColor(chatLatest, chatPrevMonth),
 
       hasRevTrend: revTrend.has, revTrendPoints: revTrend.points, revTrendList: revTrend.list,
       revTrendLabel: trailing.length >= 2 ? periodLabel(revFilter.isCustom, trailing) : (ytdRows.length >= 2 ? (trendYear + ' YTD') : 'Trailing 6 Months'),
