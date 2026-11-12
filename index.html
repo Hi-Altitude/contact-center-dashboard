@@ -5468,6 +5468,9 @@ a:hover{color:var(--ink-deep);}
       <div sc-camel-on-click="{{ goToRevenue }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;background:{{ revNavBg }};font:700 16px/1 'Lato';cursor:pointer;">
         <span style="width:8px;height:8px;border-radius:50%;background:var(--revenue);flex-shrink:0;"></span>Revenue
       </div>
+      <div sc-camel-on-click="{{ goToReturns }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;background:{{ returnsNavBg }};font:700 16px/1 'Lato';cursor:pointer;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#3E7A7E;flex-shrink:0;"></span>Returns
+      </div>
       <div sc-camel-on-click="{{ goToPlatformCosts }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;background:{{ platformNavBg }};font:700 16px/1 'Lato';cursor:pointer;">
         <span style="width:8px;height:8px;border-radius:50%;background:#8C6A3F;flex-shrink:0;"></span>Platform Cost Detail
       </div>
@@ -6638,6 +6641,10 @@ a:hover{color:var(--ink-deep);}
       <div style="text-align:center;font:400 12px/1 'Lato';color:var(--muted);margin-top:2px;">Phone Orders &amp; Subscription Rebill = Dialpad call revenue&nbsp;·&nbsp;Web-Assisted Chat = {{ chatAssistedFootLabel }} Shopify orders&nbsp;·&nbsp;AOV = average order value across contact-center-attributed orders</div>
     </section>
 
+    <section data-report-section="" data-screen-label="Returns" ref="{{ returnsSectionRef }}" style="height:100vh;overflow-y:auto;padding:14px 24px 10px;display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--line);scroll-snap-align:start;scroll-snap-stop:always;">
+      <div data-returns-root=""></div>
+    </section>
+
     <section data-report-section="" data-screen-label="Platform Cost Detail" ref="{{ platformSectionRef }}" style="height:100vh;overflow-y:auto;padding:10px 24px 6px;display:flex;flex-direction:column;gap:6px;box-sizing:border-box;border-top:1px solid var(--line);scroll-snap-align:start;scroll-snap-stop:always;">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
         <div>
@@ -7745,7 +7752,7 @@ a:hover{color:var(--ink-deep);}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;min-height:60px;">
           <div>
             <div style="font:700 15px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--sage-deep);">Customer Satisfaction (CSAT)</div>
-            <div style="font:400 15px/1.3 'Lato';color:var(--muted);margin-top:4px;">Customer survey results</div>
+            <div style="font:400 15px/1.3 'Lato';color:var(--muted);margin-top:4px;">Customer survey results &middot; all channels, AI and agents combined</div>
           </div>
           <div style="width:32px;height:32px;border-radius:50%;background:{{ csatIconBg }};color:#fff;display:flex;align-items:center;justify-content:center;font:700 16px/1 'Lato';flex-shrink:0;">{{ csatGoalMetIcon }}</div>
         </div>
@@ -7901,45 +7908,32 @@ a:hover{color:var(--ink-deep);}
         <div data-exec-row="top">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;min-height:60px;">
           <div>
-            <div style="font:700 15px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--sage-deep);">Contacts per 100 D2C Orders</div>
-            <div style="font:400 15px/1.3 'Lato';color:var(--muted);margin-top:4px;">Do customers need to contact us less?</div>
+            <div style="font:700 15px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--sage-deep);">Agent Workload per 100 Orders</div>
+            <div style="font:400 15px/1.3 'Lato';color:var(--muted);margin-top:4px;">Conversations a person handled for every 100 orders</div>
           </div>
-          <div style="width:32px;height:32px;border-radius:50%;background:{{ contactsIconBg }};color:#fff;display:flex;align-items:center;justify-content:center;font:700 16px/1 'Lato';flex-shrink:0;">{{ contactsGoalMetIcon }}</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:{{ workloadIconBg }};color:#fff;display:flex;align-items:center;justify-content:center;font:700 16px/1 'Lato';flex-shrink:0;">{{ workloadIcon }}</div>
         </div>
         <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin-top:14px;">
-          <span style="font:600 {{ contactsValueSize }}/1 'Playfair Display';color:var(--ink);">{{ contactsPer100Label }}</span>
-          <span style="font:700 15px/1.3 'Lato';color:var(--ink);max-width:230px;">customer conversations for every 100 orders</span>
+          <span style="font:600 {{ workloadValueSize }}/1 'Playfair Display';color:var(--ink);">{{ workloadLabel }}</span>
+          <span style="font:700 15px/1.3 'Lato';color:var(--ink);max-width:230px;">conversations handled by a person for every 100 orders</span>
         </div>
-        <sc-if value="{{ hasOrdersPerContact }}" hint-placeholder-val="{{ true }}"><div style="font:400 14px/1.3 'Lato';color:var(--muted);margin-top:6px;">{{ ordersPerContactLabel }}</div></sc-if>
-        <sc-if value="{{ hasContactsSplit }}" hint-placeholder-val="{{ true }}">
-        <div style="display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap;margin-top:10px;">
-          <span style="display:inline-flex;align-items:center;gap:6px;font:700 13px/1.3 'Lato';color:var(--human-deep);"><span style="width:9px;height:9px;border-radius:50%;background:var(--human);flex-shrink:0;"></span>{{ humanPer100Label }} with a person</span>
-          <span style="display:inline-flex;align-items:center;gap:6px;font:700 13px/1.3 'Lato';color:var(--ai);"><span style="width:9px;height:9px;border-radius:50%;background:var(--ai);flex-shrink:0;"></span>{{ aiPer100Label }} automated</span>
-        </div>
-        </sc-if>
+        <sc-if value="{{ hasWorkloadPy }}" hint-placeholder-val="{{ true }}"><div style="font:700 14px/1.3 'Lato';color:{{ workloadPyColor }};margin-top:8px;">{{ workloadPyLabel }}</div></sc-if>
+        <sc-if value="{{ hasContactsSplit }}" hint-placeholder-val="{{ true }}"><div style="font:400 13px/1.3 'Lato';color:var(--muted);margin-top:6px;">{{ contactsPer100Label }} total conversations per 100 orders &middot; {{ aiPer100Label }} automated</div></sc-if>
         </div>
         <div data-exec-row="gauge">
-        <sc-if value="{{ contactsGauge.has }}" hint-placeholder-val="{{ true }}">
-        <div style="width:100%;max-width:300px;margin:18px auto 0;">
-          <div style="position:relative;">
-            <svg viewBox="0 0 220 128" style="display:block;width:100%;height:auto;overflow:visible;" aria-hidden="true">
-              <defs>
-                <pattern id="gh-bad-contacts" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#F6E4E1"></rect><rect width="3" height="6" fill="#AF4848"></rect></pattern>
-                <pattern id="gh-good-contacts" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#E8EFE6"></rect><rect width="3" height="6" fill="#5F7D5E"></rect></pattern>
-              </defs>
-              <path d="M24 118 A86 86 0 0 1 196 118" fill="none" style="stroke:#EFE9DE;stroke-width:10;"></path>
-              <path d="M32 118 A78 78 0 0 1 188 118" fill="none" style="stroke:var(--sage-deep);stroke-width:3;"></path>
-              <path d="M32 118 A78 78 0 0 1 188 118" fill="none" style="stroke:#AF4848;stroke-width:3;stroke-dasharray:{{ contactsGauge.rimRedDash }};"></path>
-              <path data-gauge-hatch="" d="M24 118 A86 86 0 0 1 196 118" fill="none" style="stroke:{{ contactsGauge.hatchStroke }};stroke-width:10;stroke-dasharray:{{ contactsGauge.hatchDash }};opacity:1;"></path>
-              <line x1="12" y1="118" x2="34" y2="118" style="stroke:var(--ink);stroke-width:2.5;transform-box:view-box;transform-origin:110px 118px;transform:rotate({{ contactsGauge.goalDeg }}deg);"></line>
-              <polygon data-gauge-needle="" data-target="{{ contactsGauge.needleDeg }}" points="36,118 110,114.6 118,118 110,121.4" style="fill:var(--ink);transform-box:view-box;transform-origin:110px 118px;transform:rotate({{ contactsGauge.needleDeg }}deg);"></polygon>
-              <circle cx="110" cy="118" r="6" style="fill:var(--ink);"></circle><circle cx="110" cy="118" r="2" style="fill:#fff;"></circle>
-            </svg>
-            <div style="position:absolute;left:{{ contactsGauge.goalLeft }}%;top:{{ contactsGauge.goalTop }}%;transform:translate(-50%,-50%);font:700 12px/1 'Lato';letter-spacing:.06em;color:var(--ink);white-space:nowrap;">{{ contactsGauge.goalText }}</div>
+        <sc-if value="{{ workloadSpark.has }}" hint-placeholder-val="{{ true }}">
+        <div style="width:100%;max-width:320px;margin:18px auto 0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;font:700 11px/1 'Lato';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;"><span>13-month trend</span><span style="color:var(--sage-deep);">&#9660; Lower is better</span></div>
+          <svg viewBox="0 0 300 100" style="display:block;width:100%;height:auto;overflow:visible;" aria-hidden="true">
+            <line x1="12" y1="96" x2="288" y2="96" stroke="var(--line)" stroke-width="1"></line>
+            <polyline points="{{ workloadSpark.points }}" fill="none" stroke="var(--human-deep)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+            <circle cx="{{ workloadSpark.x0 }}" cy="{{ workloadSpark.y0 }}" r="4" fill="var(--human)"></circle>
+            <circle cx="{{ workloadSpark.x1 }}" cy="{{ workloadSpark.y1 }}" r="5" fill="var(--human-deep)"></circle>
+          </svg>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;">
+            <span style="font:400 12px/1.2 'Lato';color:var(--muted);">{{ workloadSpark.m0 }} <b style="font:700 15px/1 'Lato';color:var(--human);margin-left:4px;">{{ workloadSpark.v0 }}</b></span>
+            <span style="font:400 12px/1.2 'Lato';color:var(--muted);">{{ workloadSpark.m1 }} <b style="font:700 15px/1 'Lato';color:var(--human-deep);margin-left:4px;">{{ workloadSpark.v1 }}</b></span>
           </div>
-          <div style="display:flex;justify-content:space-between;font:400 11px/1 'Lato';color:var(--muted);margin-top:6px;"><span>{{ contactsGauge.loText }}</span><span>{{ contactsGauge.hiText }}</span></div>
-          <div style="display:flex;justify-content:space-between;font:700 11px/1 'Lato';letter-spacing:.06em;margin-top:6px;"><span style="color:#AF4848;">&#9664; BELOW GOAL</span><span style="color:var(--sage-deep);">GOAL MET &#9654;</span></div>
-          <div style="font:700 16px/1.25 'Lato';color:{{ contactsGauge.color }};text-align:center;margin-top:12px;">{{ contactsGauge.gapText }}</div>
         </div>
         </sc-if>
         </div>
@@ -7951,34 +7945,11 @@ a:hover{color:var(--ink-deep);}
             <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Automated</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ aiContactsTotal }}</div></div>
             <div><div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Orders (Web + Phone)</div><div style="font:600 22px/1.4 'Playfair Display';color:var(--ink);">{{ totalOrdersForRatio }}</div></div>
           </div>
-          <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:8px;">Conversations answered across Phone, Email, Chat and SMS (automated included) ÷ the sheet's "Total # Sales CC and Web" orders, × 100. Summed over the whole period before dividing. Lower means customers needed us less per order.</div>
+          <div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:8px;">Agent workload = conversations a person handled across Phone, Email, Chat and SMS ÷ orders (CRM, excl. Amazon), × 100, summed over the period before dividing. Lower is better: fewer conversations need a person per order.</div>
         </sc-if>
         </div>
         <div data-exec-row="footer" style="margin-top:auto;">
-        <sc-if value="{{ execIsDetailed3 }}" hint-placeholder-val="{{ false }}">
-        <div style="height:16px;"></div>
-        <div sc-camel-on-mouse-enter="{{ onContactsGoalHover }}" sc-camel-on-mouse-leave="{{ onContactsGoalUnhover }}" style="display:flex;align-items:center;justify-content:space-between;margin-top:0;gap:10px;padding-top:12px;border-top:1px solid var(--line);position:relative;">
-          <span style="font:400 13px/1 'Lato';color:var(--muted);display:flex;align-items:center;gap:6px;">{{ contactsGoalLabel }} <sc-if value="{{ execIsDetailed3 }}" hint-placeholder-val="{{ false }}"><span sc-camel-on-click="{{ toggleContactsGoalPopover }}" style="width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font:700 10px/1 'Lato';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">i</span></sc-if></span>
-          <span style="font:700 11px/1 'Lato';letter-spacing:.04em;padding:5px 12px;border-radius:14px;white-space:nowrap;flex-shrink:0;background:{{ contactsChipBg }};color:{{ contactsChipColor }};">{{ contactsGoalMetIcon }} {{ contactsChipLabel }}</span>
-          <sc-if value="{{ isContactsPopoverOpen }}" hint-placeholder-val="{{ false }}">
-            <div style="position:absolute;left:0;bottom:36px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:14px 16px;width:220px;z-index:5;">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">Goal History</span>
-                <sc-if value="{{ isChrisB }}" hint-placeholder-val="{{ false }}"><span sc-camel-on-click="{{ openContactsGoalEditor }}" style="font:700 11px/1 'Lato';color:var(--sage-deep);cursor:pointer;text-decoration:underline;">+ Add</span></sc-if>
-              </div>
-              <sc-for list="{{ contactsGoalHistory }}" as="g" hint-placeholder-count="1"><div style="font:400 12px/1.3 'Lato';color:var(--muted);margin-top:6px;">{{ g.label }}</div></sc-for>
-              <sc-if value="{{ isContactsGoalEditorOpen }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
-                  <input type="number" placeholder="e.g. 30" value="{{ goalDraftValue }}" sc-camel-on-change="{{ setGoalDraftValue }}" style="border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:600 13px/1 'Lato';">
-                  <input type="text" placeholder="e.g. Sep 2026" value="{{ goalDraftMonth }}" sc-camel-on-change="{{ setGoalDraftMonth }}" style="border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:600 13px/1 'Lato';">
-                  <div style="display:flex;gap:8px;"><span sc-camel-on-click="{{ saveContactsGoal }}" style="font:700 12px/1 'Lato';color:#fff;background:var(--sage-deep);border-radius:6px;padding:7px 12px;cursor:pointer;">Save</span><span sc-camel-on-click="{{ closeGoalEditor }}" style="font:700 12px/1 'Lato';color:var(--muted);cursor:pointer;">Cancel</span></div>
-                </div>
-              </sc-if>
-            </div>
-          </sc-if>
-        </div>
-        </sc-if>
-      
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font:400 13px/1.35 'Lato';color:var(--muted);">No target set yet: tracked as a trend. Lower is better &mdash; fewer conversations need a person as automation and self-service improve.</div>
         </div>
       </div>
 
@@ -9636,7 +9607,7 @@ function feedLocalDate(ymd) { const p = String(ymd).split('-').map(Number); retu
 // field's break keeps its number but gets a " †" footnote (explained in the page footer).
 let FEED_BREAKS_RUNTIME = [];
 const FEED_FIELD_IDS = { emailVol: 'email_sent', chatVol: 'chat_created', smsVol: 'sms_conversations',
-  totalContactsAllChannels: 'contacts_total', chatOrders: 'chat_sales_revenue',
+  totalContactsAllChannels: 'contacts_total', totalContactsHumanOnly: 'contacts_human', chatOrders: 'chat_sales_revenue',
   agentCostPerContact: 'cost_per_contact_human', aiCostPerContact: 'cost_per_contact_ai', blendedCostPerContact: 'cost_per_contact_blended' };
 function feedBreakIdx(field) {
   const id = FEED_FIELD_IDS[field]; if (!id) return null;
@@ -9740,6 +9711,144 @@ function feedToPhoneSales(feed) {
 }
 
 
+
+// ============================================================================================
+// Returns page (feed-driven, self-rendering). Order-month cohorts from the Power BI returns model.
+// Direction: the latest MATURE month (90+ days after month end, ~99% of returns in) against the
+// average of the three mature months before it; lower is better. Months still filling in are drawn
+// dashed and labeled with how complete they typically are. Never compares an immature month.
+// ============================================================================================
+function renderReturns() {
+  const root = document.querySelector('[data-returns-root]');
+  const feed = window.__CX_FEED;
+  if (!root || !feed || !feed.returns) return;
+  const key = feed.generated_at + '|' + (root.clientWidth > 900 ? 'w' : 'n');
+  if (root.dataset.key === key && root.innerHTML) return;
+  const start = feed.returns.start_month || '2026-02';
+  const months = feed.months.filter(m => m.month >= start && m.values.return_rate_orders != null);
+  if (!months.length) { root.innerHTML = '<div style="padding:40px;color:var(--muted);font:400 15px Lato;">No returns data in the feed yet.</div>'; root.dataset.key = key; return; }
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const lbl = ym => { const p = ym.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(p[1]) - 1] + ' ' + p[0]; };
+  const short = ym => lbl(ym).slice(0, 3);
+  const pct = (v, d) => v == null ? '\u2014' : (v * 100).toFixed(d == null ? 2 : d) + '%';
+  const usdK = v => v == null ? '\u2014' : '$' + (v / 1000).toFixed(1) + 'K';
+  const mature = months.filter(m => m.values.returns_maturity === 'mature');
+  const L = mature[mature.length - 1];
+  const prior = L ? mature.slice(Math.max(0, mature.length - 4), mature.length - 1) : [];
+  const avg = (arr, k) => { const v = arr.map(m => m.values[k]).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const RED = '#AF4848', GREEN = 'var(--sage-deep)', TEAL = '#3E7A7E', MUTED = 'var(--muted)';
+  const badge = (now, base) => {
+    if (now == null || base == null || !base) return '';
+    const ch = (now - base) / base, flat = Math.abs(ch) < 0.02;
+    const col = flat ? MUTED : (ch > 0 ? RED : GREEN), arrow = flat ? '\u25B6' : (ch > 0 ? '\u25B2' : '\u25BC');
+    return '<span style="display:inline-block;font:700 13px/1 Lato;color:' + col + ';background:' + (flat ? '#F0EDE7' : (ch > 0 ? '#F6E4E1' : '#E8EFE6')) +
+      ';border-radius:12px;padding:5px 10px;">' + arrow + ' ' + (flat ? 'Flat' : Math.abs(Math.round(ch * 100)) + '%') + ' vs prior 3 mature months</span>';
+  };
+  const card = (title, big, sub, extra) => '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:6px;min-width:0;">' +
+    '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">' + title + '</div>' +
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;"><span style="font:600 40px/1 \'Playfair Display\';color:var(--ink);">' + big + '</span>' +
+    '<span style="font:400 13px/1.3 Lato;color:' + MUTED + ';">' + sub + '</span></div>' + (extra || '') + '</div>';
+
+  // --- reasons: latest mature quarter vs the quarter before (shares of RECORDED reasons) ---
+  const rb = {}; ((feed.breakdowns || {}).returns_reasons || []).forEach(r => { rb[r.month] = r.items; });
+  const qShare = (ms) => {
+    const agg = {}; let total = 0, nr = 0;
+    ms.forEach(m => (rb[m.month] || []).forEach(it => { if (it.key === '(not recorded)') { nr += it.returns; return; } agg[it.label] = (agg[it.label] || 0) + it.returns; total += it.returns; }));
+    const out = {}; Object.keys(agg).forEach(k => { out[k] = total ? agg[k] / total : 0; });
+    return { shares: out, coverage: (total + nr) ? total / (total + nr) : null };
+  };
+  const qNow = L ? mature.slice(Math.max(0, mature.length - 3)) : [], qPrev = L ? mature.slice(Math.max(0, mature.length - 6), Math.max(0, mature.length - 3)) : [];
+  const sNow = qShare(qNow), sPrev = qShare(qPrev);
+  const reasons = Object.keys(sNow.shares).sort((a, b) => sNow.shares[b] - sNow.shares[a]);
+  const biggest = reasons.slice().sort((a, b) => Math.abs((sNow.shares[b] - (sPrev.shares[b] || 0))) - Math.abs((sNow.shares[a] - (sPrev.shares[a] || 0))))[0];
+  const qLbl = q => q.length ? short(q[0].month) + '\u2013' + short(q[q.length - 1].month) : '';
+  const subNow = sNow.shares['Didn\u2019t need this shipment'], subPrev = sPrev.shares['Didn\u2019t need this shipment'];
+
+  // --- trend chart (return rate, all months; mature solid, maturing dashed) ---
+  const W = 640, H = 210, padL = 40, padR = 16, padT = 24, padB = 30;
+  const maxV = Math.max(...months.map(m => m.values.return_rate_orders)) * 1.2;
+  const X = i => padL + i * ((W - padL - padR) / Math.max(1, months.length - 1)), Y = v => padT + (1 - v / maxV) * (H - padT - padB);
+  const firstOpen = months.findIndex(m => m.values.returns_maturity !== 'mature');
+  const pts = months.map((m, i) => [X(i), Y(m.values.return_rate_orders)]);
+  const solid = (firstOpen < 0 ? pts : pts.slice(0, firstOpen)).map(p => p.join(',')).join(' ');
+  const dashed = firstOpen < 0 ? '' : pts.slice(Math.max(0, firstOpen - 1)).map(p => p.join(',')).join(' ');
+  const inLbl = { 'nearly complete': '~95% in', maturing: '~88% in', early: '<80% in' };
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;overflow:visible;">';
+  if (firstOpen >= 0) svg += '<rect x="' + (X(firstOpen) - 16) + '" y="' + padT + '" width="' + (W - padR - X(firstOpen) + 16) + '" height="' + (H - padT - padB) + '" fill="#F3F0EA"></rect>' +
+    '<text x="' + (W - padR) + '" y="' + (padT - 8) + '" text-anchor="end" style="font:700 11px Lato;fill:#7A756C;letter-spacing:.04em;">STILL FILLING IN</text>';
+  [0, 0.01, 0.02, 0.03].filter(t => t < maxV).forEach(t => { svg += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="#E1DACE" stroke-dasharray="' + (t ? '3 4' : '0') + '"></line><text x="' + (padL - 6) + '" y="' + (Y(t) + 4) + '" text-anchor="end" style="font:400 11px Lato;fill:#7A756C;">' + (t * 100) + '%</text>'; });
+  svg += '<polyline points="' + solid + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5"></polyline>';
+  if (dashed) svg += '<polyline points="' + dashed + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5" stroke-dasharray="6 5"></polyline>';
+  months.forEach((m, i) => {
+    const open = m.values.returns_maturity !== 'mature', isL = L && m.month === L.month;
+    svg += '<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="' + (isL ? 5.5 : 3.5) + '" fill="' + (open ? '#fff' : TEAL) + '" stroke="' + TEAL + '" stroke-width="2"></circle>' +
+      '<text x="' + pts[i][0] + '" y="' + (pts[i][1] - 10) + '" text-anchor="middle" style="font:' + (isL ? 700 : 600) + ' 12px Lato;fill:' + (open ? '#7A756C' : 'var(--ink)') + ';">' + pct(m.values.return_rate_orders, 1) + '</text>' +
+      '<text x="' + pts[i][0] + '" y="' + (H - 12) + '" text-anchor="middle" style="font:400 11px Lato;fill:#7A756C;">' + short(m.month) + '</text>' +
+      (open ? '<text x="' + pts[i][0] + '" y="' + (H) + '" text-anchor="middle" style="font:400 10px Lato;fill:#7A756C;">' + (inLbl[m.values.returns_maturity] || '') + '</text>' : '');
+  });
+  svg += '</svg>';
+
+  // --- reasons bars ---
+  const maxS = Math.max(...reasons.map(r => Math.max(sNow.shares[r] || 0, sPrev.shares[r] || 0)), 0.01);
+  const reasonRows = reasons.map(r => {
+    const a = sPrev.shares[r] || 0, b = sNow.shares[r] || 0, d = (b - a) * 100, hot = r === biggest;
+    return '<div style="display:grid;grid-template-columns:150px 1fr 64px;gap:8px;align-items:center;">' +
+      '<div style="font:' + (hot ? 700 : 400) + ' 13px/1.2 Lato;color:var(--ink);">' + esc(r) + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:2px;">' +
+        '<div style="height:7px;width:' + (a / maxS * 100).toFixed(1) + '%;background:#CFE0E1;border-radius:3px;"></div>' +
+        '<div style="height:9px;width:' + (b / maxS * 100).toFixed(1) + '%;background:' + TEAL + ';border-radius:3px;"></div></div>' +
+      '<div style="font:' + (hot ? 700 : 600) + ' 13px/1 Lato;color:' + (hot ? 'var(--ink)' : MUTED) + ';text-align:right;">' + (b * 100).toFixed(0) + '% <span style="font-size:11px;">(' + (d >= 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ')</span></div></div>';
+  }).join('');
+
+  // --- priority products ---
+  const pb = {}; ((feed.breakdowns || {}).returns_products || []).forEach(r => { pb[r.month] = r.items; });
+  const pri = (feed.returns.priority_products || []);
+  const prodCards = pri.map(name => {
+    const series = months.map(m => { const it = (pb[m.month] || []).find(x => x.key === name); return it ? it.rate_orders : null; });
+    const matIdx = months.map((m, i) => m.values.returns_maturity === 'mature' ? i : -1).filter(i => i >= 0 && series[i] != null);
+    const li = matIdx[matIdx.length - 1], pv = matIdx.slice(-4, -1).map(i => series[i]);
+    const base = pv.length ? pv.reduce((a, b) => a + b, 0) / pv.length : null, now = li != null ? series[li] : null;
+    const vals = series.filter(v => v != null); if (!vals.length) return '';
+    const sw = 220, sh = 46, mx = Math.max(...vals) * 1.15;
+    const sx = i => 4 + i * ((sw - 8) / Math.max(1, months.length - 1)), sy = v => 4 + (1 - v / mx) * (sh - 8);
+    const sp = series.map((v, i) => v == null ? null : [sx(i), sy(v)]);
+    const fo = months.findIndex(m => m.values.returns_maturity !== 'mature');
+    const segA = sp.slice(0, fo < 0 ? sp.length : fo).filter(Boolean).map(p => p.join(',')).join(' ');
+    const segB = fo < 0 ? '' : sp.slice(Math.max(0, fo - 1)).filter(Boolean).map(p => p.join(',')).join(' ');
+    return '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:0;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font:700 14px/1 Lato;color:var(--ink);">' + esc(name) + '</span>' +
+      '<span style="font:600 22px/1 \'Playfair Display\';color:var(--ink);">' + pct(now) + '</span></div>' +
+      '<svg viewBox="0 0 ' + sw + ' ' + sh + '" preserveAspectRatio="none" style="width:100%;height:46px;display:block;margin:6px 0;"><polyline points="' + segA + '" fill="none" stroke="' + TEAL + '" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>' +
+      (segB ? '<polyline points="' + segB + '" fill="none" stroke="' + TEAL + '" stroke-width="2" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"></polyline>' : '') + '</svg>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;"><span style="font:400 12px Lato;color:' + MUTED + ';">' + (li != null ? lbl(months[li].month) + ' orders' : '') + '</span>' + badge(now, base).replace(' vs prior 3 mature months', '') + '</div></div>';
+  }).join('');
+
+  const Lv = L ? L.values : {};
+  const html =
+    '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px;">' +
+      '<div><h1 style="font:500 24px/1 \'Playfair Display\';margin:0;color:' + TEAL + ';">Returns</h1>' +
+      '<div style="font:400 13px/1.4 Lato;color:' + MUTED + ';margin-top:6px;">By the month the order was placed. Returns keep arriving for about 90 days, so the latest complete month is ' + (L ? lbl(L.month) : '\u2014') + '; later months are still filling in. Lower is better.</div></div></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">' +
+      card('Return rate', pct(Lv.return_rate_orders), 'of ' + (L ? lbl(L.month) : '') + ' orders were returned', '<div>' + badge(Lv.return_rate_orders, avg(prior, 'return_rate_orders')) + '</div>') +
+      card('Returned revenue', pct(Lv.return_rate_revenue), 'of revenue \u00b7 ' + usdK(Lv.returned_revenue), '<div>' + badge(Lv.return_rate_revenue, avg(prior, 'return_rate_revenue')) + '</div>') +
+      card('Subscription-driven returns', subNow == null ? '\u2014' : (subNow * 100).toFixed(0) + '%', 'of returns with a reason, ' + qLbl(qNow) + ' orders',
+           '<div><span style="display:inline-block;font:700 13px/1 Lato;color:' + (subNow > subPrev ? RED : GREEN) + ';background:' + (subNow > subPrev ? '#F6E4E1' : '#E8EFE6') + ';border-radius:12px;padding:5px 10px;">' +
+           (subNow > subPrev ? '\u25B2 +' : '\u25BC \u2212') + Math.abs((subNow - subPrev) * 100).toFixed(1) + ' pts vs ' + qLbl(qPrev) + '</span></div>') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;margin-top:12px;">' +
+      '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-width:0;"><div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin-bottom:6px;">Return rate by order month</div>' + svg + '</div>' +
+      '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-width:0;display:flex;flex-direction:column;gap:9px;">' +
+        '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">Why customers return</div>' +
+        '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';">Share of returns with a reason \u00b7 <b style="color:' + TEAL + ';">' + qLbl(qNow) + '</b> vs <span style="color:#7FAAAD;font-weight:700;">' + qLbl(qPrev) + '</span> orders (pts change)</div>' +
+        reasonRows +
+        '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';margin-top:auto;">A reason was recorded for ' + pct(sNow.coverage, 0) + ' of these returns.</div></div>' +
+    '</div>' +
+    (prodCards ? '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin:14px 0 8px;">Priority products \u00b7 return rate</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(' + pri.length + ',minmax(0,1fr));gap:12px;">' + prodCards + '</div>' : '') +
+    '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed that month \u00f7 orders (excl. Amazon and Walmart); Power BI returns model. A return can carry more than one reason. Direction compares the latest complete month with the average of the three complete months before it.</div>';
+  root.innerHTML = html; root.dataset.key = key;
+}
+
 // Contact Handling Split: a label stays inside its bar segment only if it fits the segment's actual width;
 // otherwise it moves to the column right of the bar, in the segment's color. Measured, so labels are never
 // clipped at any screen or projector size.
@@ -9758,7 +9867,7 @@ function fitSplitLabels() {
   });
 }
 (function () {
-  let t = null; const run = () => { clearTimeout(t); t = setTimeout(fitSplitLabels, 60); };
+  let t = null; const run = () => { clearTimeout(t); t = setTimeout(() => { fitSplitLabels(); try { renderReturns(); } catch (e) { console.warn('returns page', e); } }, 60); };
   window.addEventListener('resize', run); window.addEventListener('load', run);
   const start = () => new MutationObserver(run).observe(document.body, { childList: true, subtree: true, characterData: true });
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
@@ -10100,6 +10209,8 @@ class Component extends DCLogic {
     // conversations a person handled and ones AI resolved. Counts are summed over the period before
     // dividing, so a quarter or a year is a true ratio, not an average of monthly ratios.
     const ordersOf = (ms) => ms.reduce((a, m) => a + (scByMonth[m] ? scByMonth[m].totalOrdersCcAndWeb || 0 : 0), 0);
+    const sortedSelPreview = (ms, dy) => { const o = [...ms].sort((a, b) => monthIdx(a) - monthIdx(b)).map(m => { const p = m.split(' '); return p[0] + ' ' + (Number(p[1]) + dy); });
+      return o.length <= 1 ? (o[0] || '') : o[0] + ' \u2013 ' + o[o.length - 1]; };
     const contactsOf = (ms, key) => ms.reduce((a, m) => a + (rowsByMonth[m] ? rowsByMonth[m][key] || 0 : 0), 0);
     const per100 = (ms) => { const o = ordersOf(ms), c = contactsOf(ms, 'totalContactsAllChannels'); return o > 0 && c > 0 ? c / o * 100 : null; };
     const round1 = (v) => v == null ? null : Math.round(v * 10) / 10;
@@ -10122,6 +10233,34 @@ class Component extends DCLogic {
       for (let i = 0; i < short; i++) { if (order[i % 2][0] === 'h') humanPer100++; else aiPer100++; }
       if (short < 0) { if (aiPer100 > 0) aiPer100 += short; else humanPer100 += short; }
     }
+    // Card 3: agent workload = conversations a PERSON handled per 100 orders. No target (Nick, Nov 2026): a trend
+    // metric, lower is better. The year-ago comparison uses the same months a year earlier, summed then divided.
+    const humanPer100Of = (ms) => { const o = ordersOf(ms), c = contactsOf(ms, 'totalContactsHumanOnly'); return o > 0 && c > 0 ? c / o * 100 : null; };
+    const shiftYear = (m, d) => { const p = String(m).split(' '); return p[0] + ' ' + (Number(p[1]) + d); };
+    const wlNowExact = humanPer100Of(selMonths);
+    const pySelMonths = selMonths.map(m => shiftYear(m, -1)).filter(m => rowsByMonth[m] && scByMonth[m]);
+    const wlPyExact = pySelMonths.length === selMonths.length ? humanPer100Of(pySelMonths) : null;
+    const wlNow = wlNowExact == null ? null : Math.round(wlNowExact), wlPy = wlPyExact == null ? null : Math.round(wlPyExact);
+    const wlChange = (wlNowExact != null && wlPyExact) ? (wlNowExact - wlPyExact) / wlPyExact : null;
+    const wlCross = wlChange != null && feedCrosses('totalContactsHumanOnly', selMonths.map(m => ({ month: m })), pySelMonths.map(m => ({ month: m })));
+    const wlPyMonthLabel = sortedSelPreview(selMonths, -1);
+    // 13-month trend ending at the latest selected month
+    const allMonthsOrdered = rows.map(r => r.month).filter(m => scByMonth[m]);
+    const lastSel = [...selMonths].sort((a, b) => monthIdx(a) - monthIdx(b)).pop();
+    const endIdx = allMonthsOrdered.indexOf(lastSel);
+    const sparkMonths = endIdx < 0 ? [] : allMonthsOrdered.slice(Math.max(0, endIdx - 12), endIdx + 1);
+    const sparkVals = sparkMonths.map(m => humanPer100Of([m]));
+    const workloadSpark = (() => {
+      const pts = sparkVals.map((v, i) => ({ v, i })).filter(o => o.v != null);
+      if (pts.length < 2) return { has: false };
+      const lo = Math.min(...pts.map(o => o.v)), hi = Math.max(...pts.map(o => o.v)), span = Math.max(hi - lo, 1);
+      const X = i => 18 + i * (264 / Math.max(sparkMonths.length - 1, 1)), Y = v => 22 + (hi - v) / span * 66;
+      const f = pts[0], l = pts[pts.length - 1];
+      const short = m => { const p = String(m).split(' '); return p[0].slice(0, 3) + " '" + String(p[1]).slice(-2); };
+      return { has: true, points: pts.map(o => X(o.i).toFixed(1) + ',' + Y(o.v).toFixed(1)).join(' '),
+               x0: X(f.i).toFixed(1), y0: Y(f.v).toFixed(1), x1: X(l.i).toFixed(1), y1: Y(l.v).toFixed(1),
+               v0: String(Math.round(f.v)), v1: String(Math.round(l.v)), m0: short(sparkMonths[f.i]), m1: short(sparkMonths[l.i]) };
+    })();
     // Plain-English version: "about 1 conversation for every 3 orders", to the nearest half order.
     const ordersPerContact = contactsPer100Exact ? Math.round(100 / contactsPer100Exact * 2) / 2 : null;
     const gorgiasIdx = monthIdx('Sep 2026');
@@ -10145,8 +10284,8 @@ class Component extends DCLogic {
     const goal1 = csatShown != null && csatShown >= csatGoalVal;
     const goal2 = slaShown != null && slaShown >= slaGoalVal;
     const goal3 = contactsPer100 != null && contactsGoalVal != null && contactsPer100 <= contactsGoalVal;
-    const goalsTotal = 3;
-    const goalsMet = [goal1, goal2, goal3].filter(g => g === true).length;
+    const goalsTotal = 2; // CSAT and service level; agent workload is a trend metric with no target
+    const goalsMet = [goal1, goal2].filter(g => g === true).length;
     const goalsAll = goalsMet === goalsTotal;
     const monthOrder = {}; rows.forEach((r, i) => { monthOrder[r.month] = i; });
     const sortedSel = [...selMonths].sort((a, b) => (monthOrder[a] ?? 0) - (monthOrder[b] ?? 0));
@@ -10247,6 +10386,13 @@ class Component extends DCLogic {
       slaPhoneLabel: pctLbl(byChan(slaItems, 'phone')), slaEmailLabel: pctLbl(byChan(slaItems, 'email')), slaChatLabel: pctLbl(byChan(slaItems, 'chat')), slaSmsLabel: pctLbl(byChan(slaItems, 'sms')),
       slaPhoneGoalNote: 'Target: 1 min', slaEmailGoalNote: 'Target: 2 hrs', slaChatGoalNote: 'Target: 5 mins', slaSmsGoalNote: 'Target: 30 mins',
 
+      workloadLabel: wlNow == null ? em : String(wlNow), workloadValueSize: wlNow == null ? '38px' : '62px',
+      hasWorkloadPy: wlChange != null,
+      workloadPyLabel: wlChange == null ? '' : feedDagger((wlChange <= 0 ? 'Down from ' : 'Up from ') + wlPy + ' in ' + wlPyMonthLabel + ' (' + (wlChange <= 0 ? '\u2212' : '+') + Math.abs(Math.round(wlChange * 100)) + '%)', wlCross),
+      workloadPyColor: wlChange == null ? 'var(--muted)' : (wlChange <= 0 ? 'var(--sage-deep)' : '#AF4848'),
+      workloadIcon: wlChange == null ? '\u2022' : (wlChange <= 0 ? '\u2193' : '\u2191'),
+      workloadIconBg: wlChange == null ? 'var(--muted)' : (wlChange <= 0 ? 'var(--sage-deep)' : '#B9852F'),
+      workloadSpark,
       contactsPer100Label: contactsPer100 == null ? em : String(contactsPer100),
       hasOrdersPerContact: ordersPerContact != null,
       ordersPerContactLabel: ordersPerContact == null ? '' : 'About 1 conversation for every ' + (Number.isInteger(ordersPerContact) ? ordersPerContact : Math.floor(ordersPerContact) + '½') + ' orders', contactsValueSize: contactsPer100 == null ? '38px' : '62px',
@@ -10657,6 +10803,7 @@ class Component extends DCLogic {
   revSectionRef = React.createRef();
   roiSectionRef = React.createRef();
   platformSectionRef = React.createRef();
+  returnsSectionRef = React.createRef();
   projSectionRef = React.createRef();
   gorgiasSectionRef = React.createRef();
 
@@ -10736,7 +10883,7 @@ class Component extends DCLogic {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const text = await res.text();
       let rows;
-      if (feedIsJson(text)) { this._feed = feedParse(text); FEED_BREAKS_RUNTIME = this._feed.breaks || []; rows = feedToRows(this._feed); } // CX Metrics JSON feed
+      if (feedIsJson(text)) { this._feed = feedParse(text); window.__CX_FEED = this._feed; FEED_BREAKS_RUNTIME = this._feed.breaks || []; rows = feedToRows(this._feed); } // CX Metrics JSON feed
       else { this._feed = null; FEED_BREAKS_RUNTIME = []; rows = parseCsvText(text); }                                  // legacy published CSV
       if (!rows) throw new Error('columns not recognized');
       clearTimeout(this._bgRetryTimer);
@@ -10825,7 +10972,7 @@ class Component extends DCLogic {
     if (hash) try { history.replaceState(null, '', '#' + hash); } catch (e) {}
   };
   // Section hashes a link can land on directly (checked on mount and kept in sync while scrolling).
-  static SECTION_HASHES = { 'contact-center': 'contact-center', revenue: 'revenue', platform: 'platform-cost', roi: 'cost-roi', projection: 'projection', floor: 'gorgias-floor' };
+  static SECTION_HASHES = { 'contact-center': 'contact-center', revenue: 'revenue', returns: 'returns', platform: 'platform-cost', roi: 'cost-roi', projection: 'projection', floor: 'gorgias-floor' };
   goToInitialHash = () => {
     const hash = (location.hash || '').replace('#', '');
     if (!hash) return;
@@ -10850,7 +10997,7 @@ class Component extends DCLogic {
   };
 
   handleScroll = () => {
-    const c = this.containerRef.current, rev = this.revSectionRef.current, roi = this.roiSectionRef.current, platform = this.platformSectionRef.current, proj = this.projSectionRef.current;
+    const c = this.containerRef.current, rev = this.revSectionRef.current, roi = this.roiSectionRef.current, platform = this.platformSectionRef.current, proj = this.projSectionRef.current, ret = this.returnsSectionRef.current;
     const floorEl = document.querySelector('[data-screen-label="Gorgias Results Floor"]');
     const floor = floorEl ? { offsetTop: floorEl.offsetTop } : null;
     if (!c || !rev || !roi || !platform || !proj) return;
@@ -10859,6 +11006,7 @@ class Component extends DCLogic {
     else if (c.scrollTop >= proj.offsetTop - 200) next = 'projection';
     else if (c.scrollTop >= roi.offsetTop - 200) next = 'roi';
     else if (c.scrollTop >= platform.offsetTop - 200) next = 'platform';
+    else if (ret && c.scrollTop >= ret.offsetTop - 200) next = 'returns';
     else if (c.scrollTop >= rev.offsetTop - 200) next = 'revenue';
     if (next !== this.state.activeSection) {
       this.setState({ activeSection: next });
@@ -10869,7 +11017,7 @@ class Component extends DCLogic {
     // the edge, not throughout the whole section like scroll-snap-type caused).
     if (this._scrollNudgeT) clearTimeout(this._scrollNudgeT);
     this._scrollNudgeT = setTimeout(() => {
-      const tops = [0, rev.offsetTop, roi.offsetTop, platform.offsetTop, proj.offsetTop].concat(floor ? [floor.offsetTop] : []);
+      const tops = [0, rev.offsetTop, roi.offsetTop, platform.offsetTop, proj.offsetTop].concat(ret ? [ret.offsetTop] : [], floor ? [floor.offsetTop] : []);
       const y = c.scrollTop;
       let nearest = null, nearestDist = Infinity;
       for (const t of tops) { const d = Math.abs(t - y); if (d < nearestDist) { nearestDist = d; nearest = t; } }
@@ -11396,6 +11544,8 @@ class Component extends DCLogic {
       goToRevenue: this.scrollToSection(this.revSectionRef, 'revenue'),
       goToRoi: this.scrollToSection(this.roiSectionRef, 'cost-roi'),
       goToPlatformCosts: this.scrollToSection(this.platformSectionRef, 'platform-cost'),
+      goToReturns: this.scrollToSection(this.returnsSectionRef, 'returns'),
+      returnsNavBg: activeSection === 'returns' ? 'rgba(255,255,255,.08)' : 'transparent',
       goToProjection: this.scrollToSection(this.projSectionRef, 'projection'),
       goToFloor: this.goToFloor,
       floorNavBg: activeSection === 'floor' ? 'rgba(255,255,255,.08)' : 'transparent',
