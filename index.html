@@ -9718,136 +9718,179 @@ function feedToPhoneSales(feed) {
 // average of the three mature months before it; lower is better. Months still filling in are drawn
 // dashed and labeled with how complete they typically are. Never compares an immature month.
 // ============================================================================================
-function renderReturns() {
+function renderReturns(force) {
   const root = document.querySelector('[data-returns-root]');
   const feed = window.__CX_FEED;
   if (!root || !feed || !feed.returns) return;
-  const key = feed.generated_at + '|' + (root.clientWidth > 900 ? 'w' : 'n');
-  if (root.dataset.key === key && root.innerHTML) return;
+  const S = retState_();
+  const key = feed.generated_at + '|' + (root.clientWidth > 900 ? 'w' : 'n') + '|' + JSON.stringify(S);
+  if (!force && root.dataset.key === key && root.innerHTML) return;
   const start = feed.returns.start_month || '2026-02';
   const months = feed.months.filter(m => m.month >= start && m.values.return_rate_orders != null);
   if (!months.length) { root.innerHTML = '<div style="padding:40px;color:var(--muted);font:400 15px Lato;">No returns data in the feed yet.</div>'; root.dataset.key = key; return; }
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const lbl = ym => { const p = ym.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(p[1]) - 1] + ' ' + p[0]; };
-  const short = ym => lbl(ym).slice(0, 3);
-  const pct = (v, d) => v == null ? '\u2014' : (v * 100).toFixed(d == null ? 2 : d) + '%';
-  const usdK = v => v == null ? '\u2014' : '$' + (v / 1000).toFixed(1) + 'K';
-  const mature = months.filter(m => m.values.returns_maturity === 'mature');
-  const L = mature[mature.length - 1];
-  const prior = L ? mature.slice(Math.max(0, mature.length - 4), mature.length - 1) : [];
-  const avg = (arr, k) => { const v = arr.map(m => m.values[k]).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const lbl = ym => MN[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4), short = ym => MN[Number(ym.slice(5, 7)) - 1];
+  const pct = (v, d) => v == null || isNaN(v) ? '\u2014' : (v * 100).toFixed(d == null ? 2 : d) + '%';
+  const usd = v => v == null || isNaN(v) ? '\u2014' : (v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + 'M' : '$' + (v / 1000).toFixed(1) + 'K');
   const RED = '#AF4848', GREEN = 'var(--sage-deep)', TEAL = '#3E7A7E', MUTED = 'var(--muted)';
-  const badge = (now, base) => {
-    if (now == null || base == null || !base) return '';
-    const ch = (now - base) / base, flat = Math.abs(ch) < 0.02;
-    const col = flat ? MUTED : (ch > 0 ? RED : GREEN), arrow = flat ? '\u25B6' : (ch > 0 ? '\u25B2' : '\u25BC');
-    return '<span style="display:inline-block;font:700 13px/1 Lato;color:' + col + ';background:' + (flat ? '#F0EDE7' : (ch > 0 ? '#F6E4E1' : '#E8EFE6')) +
-      ';border-radius:12px;padding:5px 10px;">' + arrow + ' ' + (flat ? 'Flat' : Math.abs(Math.round(ch * 100)) + '%') + ' vs prior 3 mature months</span>';
+  const isMature = m => m.values.returns_maturity === 'mature';
+  const inLbl = { 'nearly complete': '~95% in', maturing: '~88% in', early: '<80% in' };
+  const mature = months.filter(isMature);
+
+  // ---- selection -> months ----
+  const lastMature = mature.length ? mature[mature.length - 1].month : null;
+  let selKeys;
+  if (S.mode === 'latest') selKeys = lastMature ? [lastMature] : [];
+  else if (S.mode === 'last3') selKeys = mature.slice(-3).map(m => m.month);
+  else if (S.mode === 'ytd') { const y = months[months.length - 1].month.slice(0, 4); selKeys = months.filter(m => m.month.slice(0, 4) === y).map(m => m.month); }
+  else selKeys = (S.months || []).filter(k => months.some(m => m.month === k));
+  if (!selKeys.length && lastMature) selKeys = [lastMature];
+  selKeys.sort();
+  const idx = k => months.findIndex(m => m.month === k);
+  const sel = selKeys.map(k => months[idx(k)]).filter(Boolean);
+  // Baseline: the months just before the selection, at least three (a single month is too noisy to compare
+  // against one other month), summed then divided. Same rule for every card.
+  const firstI = idx(selKeys[0]), n = sel.length, nb = Math.max(n, 3);
+  const prior = firstI - nb >= 0 ? months.slice(firstI - nb, firstI) : (firstI > 0 ? months.slice(0, firstI) : []);
+  const finalCmp = prior.length > 0 && sel.every(isMature) && prior.every(isMature);
+  const period = ms => !ms.length ? '' : (ms.length === 1 ? lbl(ms[0].month) : (ms.length === (idx(ms[ms.length - 1].month) - idx(ms[0].month) + 1)
+    ? short(ms[0].month) + (ms[0].month.slice(0, 4) !== ms[ms.length - 1].month.slice(0, 4) ? ' ' + ms[0].month.slice(0, 4) : '') + '\u2013' + lbl(ms[ms.length - 1].month)
+    : ms.map(m => short(m.month)).join(', ') + ' ' + ms[ms.length - 1].month.slice(0, 4)));
+
+  // ---- aggregation: sums first, then divide ----
+  const agg = ms => {
+    let ret = 0, ord = 0, rr = 0, rev = 0;
+    ms.forEach(m => { const v = m.values; ret += v.returns_count || 0; if (v.return_rate_orders) ord += (v.returns_count || 0) / v.return_rate_orders;
+      rr += v.returned_revenue || 0; if (v.return_rate_revenue) rev += (v.returned_revenue || 0) / v.return_rate_revenue; });
+    return { returns: ret, rate: ord ? ret / ord : null, usd: rr, usdPct: rev ? rr / rev : null };
+  };
+  const rb = {}; ((feed.breakdowns || {}).returns_reasons || []).forEach(r => { rb[r.month] = r.items; });
+  const reasonAgg = ms => { const a = {}; let tot = 0, nr = 0;
+    ms.forEach(m => (rb[m.month] || []).forEach(it => { if (it.key === '(not recorded)') { nr += it.returns; return; } a[it.label] = (a[it.label] || 0) + it.returns; tot += it.returns; }));
+    const sh = {}; Object.keys(a).forEach(k => { sh[k] = tot ? a[k] / tot : 0; }); return { shares: sh, coverage: (tot + nr) ? tot / (tot + nr) : null }; };
+  const pb = {}; ((feed.breakdowns || {}).returns_products || []).forEach(r => { pb[r.month] = r.items; });
+  const prodAgg = (ms, name) => { let ret = 0, ord = 0, rr = 0, any = false;
+    ms.forEach(m => { const it = (pb[m.month] || []).find(x => x.key === name); if (!it) return; any = true; ret += it.returns || 0; if (it.rate_orders) ord += (it.returns || 0) / it.rate_orders; rr += it.returned_revenue || 0; });
+    return any ? { rate: ord ? ret / ord : null, usd: rr } : null; };
+  const A = agg(sel), P = prior.length ? agg(prior) : null;
+  const RS = reasonAgg(sel), RP = prior.length ? reasonAgg(prior) : null;
+
+  // ---- direction badges: lower is better; gray "not final yet" when a period is still filling in ----
+  const pill = (txt, col, bg) => '<span style="display:inline-block;font:700 13px/1 Lato;color:' + col + ';background:' + bg + ';border-radius:12px;padding:5px 10px;">' + txt + '</span>';
+  const badge = (now, base, unit) => {
+    if (now == null || base == null || !prior.length) return '';
+    if (!finalCmp) return pill('\u25CB Not final yet', MUTED, '#F0EDE7');
+    const d = unit === 'pts' ? (now - base) * 100 : (base ? (now - base) / base * 100 : 0);
+    const flat = unit === 'pts' ? Math.abs(d) < 0.5 : Math.abs(d) < 2;
+    const txt = (flat ? '\u25B6 Flat' : (d > 0 ? '\u25B2 ' : '\u25BC ') + (unit === 'pts' ? (d > 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ' pts' : Math.abs(Math.round(d)) + '%'));
+    return pill(txt + ' vs ' + period(prior), flat ? MUTED : (d > 0 ? RED : GREEN), flat ? '#F0EDE7' : (d > 0 ? '#F6E4E1' : '#E8EFE6'));
   };
   const card = (title, big, sub, extra) => '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:6px;min-width:0;">' +
     '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">' + title + '</div>' +
     '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;"><span style="font:600 40px/1 \'Playfair Display\';color:var(--ink);">' + big + '</span>' +
     '<span style="font:400 13px/1.3 Lato;color:' + MUTED + ';">' + sub + '</span></div>' + (extra || '') + '</div>';
+  const subNow = RS.shares['Didn\u2019t need this shipment'], subPrev = RP ? RP.shares['Didn\u2019t need this shipment'] : null;
 
-  // --- reasons: latest mature quarter vs the quarter before (shares of RECORDED reasons) ---
-  const rb = {}; ((feed.breakdowns || {}).returns_reasons || []).forEach(r => { rb[r.month] = r.items; });
-  const qShare = (ms) => {
-    const agg = {}; let total = 0, nr = 0;
-    ms.forEach(m => (rb[m.month] || []).forEach(it => { if (it.key === '(not recorded)') { nr += it.returns; return; } agg[it.label] = (agg[it.label] || 0) + it.returns; total += it.returns; }));
-    const out = {}; Object.keys(agg).forEach(k => { out[k] = total ? agg[k] / total : 0; });
-    return { shares: out, coverage: (total + nr) ? total / (total + nr) : null };
-  };
-  const qNow = L ? mature.slice(Math.max(0, mature.length - 3)) : [], qPrev = L ? mature.slice(Math.max(0, mature.length - 6), Math.max(0, mature.length - 3)) : [];
-  const sNow = qShare(qNow), sPrev = qShare(qPrev);
-  const reasons = Object.keys(sNow.shares).sort((a, b) => sNow.shares[b] - sNow.shares[a]);
-  const biggest = reasons.slice().sort((a, b) => Math.abs((sNow.shares[b] - (sPrev.shares[b] || 0))) - Math.abs((sNow.shares[a] - (sPrev.shares[a] || 0))))[0];
-  const qLbl = q => q.length ? short(q[0].month) + '\u2013' + short(q[q.length - 1].month) : '';
-  const subNow = sNow.shares['Didn\u2019t need this shipment'], subPrev = sPrev.shares['Didn\u2019t need this shipment'];
+  // ---- picker ----
+  const presets = [['latest', 'Latest complete month'], ['last3', 'Last 3 complete months'], ['ytd', 'Year to date']];
+  const picker = '<div style="position:relative;">' +
+    '<button onclick="retTogglePicker()" style="display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--sage-deep);border-radius:10px;padding:10px 16px;font:700 16px/1 Lato;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);cursor:pointer;">Filter months <span style="font-size:11px;">\u25BC</span></button>' +
+    (S.open ? '<div style="position:absolute;right:0;top:calc(100% + 6px);z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.12);padding:12px;width:270px;">' +
+      presets.map(([k, t]) => '<div onclick="retSetMode(\'' + k + '\')" style="padding:8px 10px;border-radius:8px;cursor:pointer;font:' + (S.mode === k ? 700 : 400) + ' 14px Lato;background:' + (S.mode === k ? '#E8EFE6' : 'transparent') + ';">' + t + '</div>').join('') +
+      '<div style="font:700 11px Lato;letter-spacing:.06em;text-transform:uppercase;color:' + MUTED + ';margin:10px 10px 4px;">Or pick months</div>' +
+      '<div style="max-height:260px;overflow-y:auto;">' + months.slice().reverse().map(m => { const on = selKeys.indexOf(m.month) >= 0;
+        return '<div onclick="retToggleMonth(\'' + m.month + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;cursor:pointer;font:400 14px Lato;">' +
+          '<span><span style="display:inline-block;width:14px;height:14px;border:2px solid ' + TEAL + ';border-radius:3px;margin-right:8px;vertical-align:-2px;background:' + (on ? TEAL : 'transparent') + ';"></span>' + lbl(m.month) + '</span>' +
+          '<span style="font-size:11px;color:' + MUTED + ';">' + (isMature(m) ? '' : (inLbl[m.values.returns_maturity] || '')) + '</span></div>'; }).join('') + '</div>' +
+      '<div style="text-align:right;margin-top:8px;"><button onclick="retTogglePicker()" style="background:var(--sage-deep);color:#fff;border:0;border-radius:8px;padding:7px 16px;font:700 13px Lato;cursor:pointer;">Done</button></div></div>' : '') + '</div>';
+  const openMonths = sel.filter(m => !isMature(m));
+  const periodLine = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;">' +
+    '<span style="font:700 12px/1 Lato;letter-spacing:.06em;text-transform:uppercase;color:' + MUTED + ';">Showing</span>' +
+    '<span style="font:700 14px/1 Lato;color:var(--ink);background:#E8EFE6;border-radius:8px;padding:6px 10px;">' + period(sel) + ' orders</span>' +
+    (prior.length ? '<span style="font:400 13px/1 Lato;color:' + MUTED + ';">compared with ' + period(prior) + '</span>' : '') +
+    (openMonths.length ? '<span style="font:700 12px/1 Lato;color:#8A6A1F;background:#F5EBD8;border-radius:8px;padding:6px 10px;">Includes months still filling in (' + openMonths.map(m => short(m.month) + ' ' + (inLbl[m.values.returns_maturity] || '')).join(', ') + '): figures will rise</span>' : '') + '</div>';
 
-  // --- trend chart (return rate, all months; mature solid, maturing dashed) ---
-  const W = 640, H = 210, padL = 40, padR = 16, padT = 24, padB = 30;
-  const maxV = Math.max(...months.map(m => m.values.return_rate_orders)) * 1.2;
-  const X = i => padL + i * ((W - padL - padR) / Math.max(1, months.length - 1)), Y = v => padT + (1 - v / maxV) * (H - padT - padB);
-  const firstOpen = months.findIndex(m => m.values.returns_maturity !== 'mature');
-  const pts = months.map((m, i) => [X(i), Y(m.values.return_rate_orders)]);
-  const solid = (firstOpen < 0 ? pts : pts.slice(0, firstOpen)).map(p => p.join(',')).join(' ');
-  const dashed = firstOpen < 0 ? '' : pts.slice(Math.max(0, firstOpen - 1)).map(p => p.join(',')).join(' ');
-  const inLbl = { 'nearly complete': '~95% in', maturing: '~88% in', early: '<80% in' };
+  // ---- trend chart: full history, selection highlighted; % or $ ----
+  const W = 640, H = 220, padL = 46, padR = 16, padT = 26, padB = 34, isUsd = S.chart === 'usd';
+  const val = m => isUsd ? m.values.returned_revenue : m.values.return_rate_orders;
+  const maxV = Math.max(...months.map(val)) * 1.2;
+  const X = i => padL + (i + 0.5) * ((W - padL - padR) / months.length), Y = v => padT + (1 - v / maxV) * (H - padT - padB), bw = (W - padL - padR) / months.length;
   let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;overflow:visible;">';
-  if (firstOpen >= 0) svg += '<rect x="' + (X(firstOpen) - 16) + '" y="' + padT + '" width="' + (W - padR - X(firstOpen) + 16) + '" height="' + (H - padT - padB) + '" fill="#F3F0EA"></rect>' +
-    '<text x="' + (W - padR) + '" y="' + (padT - 8) + '" text-anchor="end" style="font:700 11px Lato;fill:#7A756C;letter-spacing:.04em;">STILL FILLING IN</text>';
-  [0, 0.01, 0.02, 0.03].filter(t => t < maxV).forEach(t => { svg += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="#E1DACE" stroke-dasharray="' + (t ? '3 4' : '0') + '"></line><text x="' + (padL - 6) + '" y="' + (Y(t) + 4) + '" text-anchor="end" style="font:400 11px Lato;fill:#7A756C;">' + (t * 100) + '%</text>'; });
-  svg += '<polyline points="' + solid + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5"></polyline>';
-  if (dashed) svg += '<polyline points="' + dashed + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5" stroke-dasharray="6 5"></polyline>';
-  months.forEach((m, i) => {
-    const open = m.values.returns_maturity !== 'mature', isL = L && m.month === L.month;
-    svg += '<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="' + (isL ? 5.5 : 3.5) + '" fill="' + (open ? '#fff' : TEAL) + '" stroke="' + TEAL + '" stroke-width="2"></circle>' +
-      '<text x="' + pts[i][0] + '" y="' + (pts[i][1] - 10) + '" text-anchor="middle" style="font:' + (isL ? 700 : 600) + ' 12px Lato;fill:' + (open ? '#7A756C' : 'var(--ink)') + ';">' + pct(m.values.return_rate_orders, 1) + '</text>' +
-      '<text x="' + pts[i][0] + '" y="' + (H - 12) + '" text-anchor="middle" style="font:400 11px Lato;fill:#7A756C;">' + short(m.month) + '</text>' +
-      (open ? '<text x="' + pts[i][0] + '" y="' + (H) + '" text-anchor="middle" style="font:400 10px Lato;fill:#7A756C;">' + (inLbl[m.values.returns_maturity] || '') + '</text>' : '');
-  });
+  months.forEach((m, i) => { if (selKeys.indexOf(m.month) >= 0) svg += '<rect x="' + (X(i) - bw / 2) + '" y="' + (padT - 6) + '" width="' + bw + '" height="' + (H - padT - padB + 6) + '" fill="#E8EFE6"></rect>'; });
+  const ticks = isUsd ? [0, 50000, 100000, 150000] : [0, 0.01, 0.02, 0.03];
+  ticks.filter(t => t < maxV).forEach(t => { svg += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="#E1DACE" stroke-dasharray="' + (t ? '3 4' : '0') + '"></line><text x="' + (padL - 6) + '" y="' + (Y(t) + 4) + '" text-anchor="end" style="font:400 11px Lato;fill:#7A756C;">' + (isUsd ? '$' + t / 1000 + 'K' : t * 100 + '%') + '</text>'; });
+  if (isUsd) {
+    months.forEach((m, i) => { const open = !isMature(m), v = val(m);
+      svg += '<rect x="' + (X(i) - bw * 0.32) + '" y="' + Y(v) + '" width="' + bw * 0.64 + '" height="' + (Y(0) - Y(v)) + '" rx="3" fill="' + (open ? '#BCD5D6' : TEAL) + '"></rect>' +
+        '<text x="' + X(i) + '" y="' + (Y(v) - 6) + '" text-anchor="middle" style="font:600 11px Lato;fill:' + (open ? '#7A756C' : 'var(--ink)') + ';">' + usd(v).replace('.0K', 'K') + '</text>'; });
+  } else {
+    const pts = months.map((m, i) => [X(i), Y(val(m))]), fo = months.findIndex(m => !isMature(m));
+    const solid = (fo < 0 ? pts : pts.slice(0, fo)).map(p => p.join(',')).join(' '), dashed = fo < 0 ? '' : pts.slice(Math.max(0, fo - 1)).map(p => p.join(',')).join(' ');
+    svg += '<polyline points="' + solid + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5"></polyline>' + (dashed ? '<polyline points="' + dashed + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5" stroke-dasharray="6 5"></polyline>' : '');
+    months.forEach((m, i) => { const open = !isMature(m);
+      svg += '<circle cx="' + pts[i][0] + '" cy="' + pts[i][1] + '" r="4" fill="' + (open ? '#fff' : TEAL) + '" stroke="' + TEAL + '" stroke-width="2"></circle>' +
+        '<text x="' + pts[i][0] + '" y="' + (pts[i][1] - 10) + '" text-anchor="middle" style="font:600 12px Lato;fill:' + (open ? '#7A756C' : 'var(--ink)') + ';">' + pct(val(m), 1) + '</text>'; });
+  }
+  months.forEach((m, i) => { svg += '<text x="' + X(i) + '" y="' + (H - 16) + '" text-anchor="middle" style="font:' + (selKeys.indexOf(m.month) >= 0 ? 700 : 400) + ' 11px Lato;fill:' + (selKeys.indexOf(m.month) >= 0 ? 'var(--ink)' : '#7A756C') + ';">' + short(m.month) + '</text>' +
+    (!isMature(m) ? '<text x="' + X(i) + '" y="' + (H - 3) + '" text-anchor="middle" style="font:400 10px Lato;fill:#7A756C;">' + (inLbl[m.values.returns_maturity] || '') + '</text>' : ''); });
   svg += '</svg>';
+  const tog = (k, t) => '<span onclick="retSetChart(\'' + k + '\')" style="cursor:pointer;padding:5px 10px;border-radius:6px;font:700 12px Lato;' + (S.chart === k || (!S.chart && k === 'pct') ? 'background:' + TEAL + ';color:#fff;' : 'color:' + TEAL + ';') + '">' + t + '</span>';
 
-  // --- reasons bars ---
-  const maxS = Math.max(...reasons.map(r => Math.max(sNow.shares[r] || 0, sPrev.shares[r] || 0)), 0.01);
-  const reasonRows = reasons.map(r => {
-    const a = sPrev.shares[r] || 0, b = sNow.shares[r] || 0, d = (b - a) * 100, hot = r === biggest;
-    return '<div style="display:grid;grid-template-columns:150px 1fr 64px;gap:8px;align-items:center;">' +
-      '<div style="font:' + (hot ? 700 : 400) + ' 13px/1.2 Lato;color:var(--ink);">' + esc(r) + '</div>' +
-      '<div style="display:flex;flex-direction:column;gap:2px;">' +
-        '<div style="height:7px;width:' + (a / maxS * 100).toFixed(1) + '%;background:#CFE0E1;border-radius:3px;"></div>' +
-        '<div style="height:9px;width:' + (b / maxS * 100).toFixed(1) + '%;background:' + TEAL + ';border-radius:3px;"></div></div>' +
-      '<div style="font:' + (hot ? 700 : 600) + ' 13px/1 Lato;color:' + (hot ? 'var(--ink)' : MUTED) + ';text-align:right;">' + (b * 100).toFixed(0) + '% <span style="font-size:11px;">(' + (d >= 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ')</span></div></div>';
-  }).join('');
+  // ---- reasons (selected vs prior) ----
+  const reasons = Object.keys(RS.shares).sort((a, b) => RS.shares[b] - RS.shares[a]);
+  const maxS = Math.max(...reasons.map(r => Math.max(RS.shares[r] || 0, RP ? (RP.shares[r] || 0) : 0)), 0.01);
+  const reasonRows = reasons.map(r => { const b = RS.shares[r] || 0, a = RP ? (RP.shares[r] || 0) : null, d = a == null ? null : (b - a) * 100;
+    return '<div style="display:grid;grid-template-columns:150px 1fr 70px;gap:8px;align-items:center;">' +
+      '<div style="font:400 13px/1.2 Lato;color:var(--ink);">' + esc(r) + '</div><div style="display:flex;flex-direction:column;gap:2px;">' +
+      (a == null ? '' : '<div style="height:7px;width:' + (a / maxS * 100).toFixed(1) + '%;background:#CFE0E1;border-radius:3px;"></div>') +
+      '<div style="height:9px;width:' + (b / maxS * 100).toFixed(1) + '%;background:' + TEAL + ';border-radius:3px;"></div></div>' +
+      '<div style="font:600 13px/1 Lato;color:var(--ink);text-align:right;">' + (b * 100).toFixed(0) + '%' + (d == null ? '' : ' <span style="font-size:11px;color:' + MUTED + ';">(' + (d >= 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ')</span>') + '</div></div>'; }).join('');
 
-  // --- priority products ---
-  const pb = {}; ((feed.breakdowns || {}).returns_products || []).forEach(r => { pb[r.month] = r.items; });
-  const pri = (feed.returns.priority_products || []);
-  const prodCards = pri.map(name => {
-    const series = months.map(m => { const it = (pb[m.month] || []).find(x => x.key === name); return it ? it.rate_orders : null; });
-    const matIdx = months.map((m, i) => m.values.returns_maturity === 'mature' ? i : -1).filter(i => i >= 0 && series[i] != null);
-    const li = matIdx[matIdx.length - 1], pv = matIdx.slice(-4, -1).map(i => series[i]);
-    const base = pv.length ? pv.reduce((a, b) => a + b, 0) / pv.length : null, now = li != null ? series[li] : null;
-    const vals = series.filter(v => v != null); if (!vals.length) return '';
-    const sw = 220, sh = 46, mx = Math.max(...vals) * 1.15;
-    const sx = i => 4 + i * ((sw - 8) / Math.max(1, months.length - 1)), sy = v => 4 + (1 - v / mx) * (sh - 8);
-    const sp = series.map((v, i) => v == null ? null : [sx(i), sy(v)]);
-    const fo = months.findIndex(m => m.values.returns_maturity !== 'mature');
-    const segA = sp.slice(0, fo < 0 ? sp.length : fo).filter(Boolean).map(p => p.join(',')).join(' ');
-    const segB = fo < 0 ? '' : sp.slice(Math.max(0, fo - 1)).filter(Boolean).map(p => p.join(',')).join(' ');
-    return '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:0;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font:700 14px/1 Lato;color:var(--ink);">' + esc(name) + '</span>' +
-      '<span style="font:600 22px/1 \'Playfair Display\';color:var(--ink);">' + pct(now) + '</span></div>' +
-      '<svg viewBox="0 0 ' + sw + ' ' + sh + '" preserveAspectRatio="none" style="width:100%;height:46px;display:block;margin:6px 0;"><polyline points="' + segA + '" fill="none" stroke="' + TEAL + '" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>' +
-      (segB ? '<polyline points="' + segB + '" fill="none" stroke="' + TEAL + '" stroke-width="2" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"></polyline>' : '') + '</svg>' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;"><span style="font:400 12px Lato;color:' + MUTED + ';">' + (li != null ? lbl(months[li].month) + ' orders' : '') + '</span>' + badge(now, base).replace(' vs prior 3 mature months', '') + '</div></div>';
-  }).join('');
+  // ---- priority products (selected period; rate and $) ----
+  const pri = feed.returns.priority_products || [];
+  const prodCards = pri.map(name => { const a = prodAgg(sel, name), b = prior.length ? prodAgg(prior, name) : null; if (!a) return '';
+    return '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:0;display:flex;flex-direction:column;gap:6px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font:700 15px/1 Lato;color:var(--ink);">' + esc(name) + '</span>' +
+      '<span style="font:600 24px/1 \'Playfair Display\';color:var(--ink);">' + pct(a.rate) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;font:400 13px Lato;color:' + MUTED + ';"><span>Revenue returned</span><span style="font:700 15px Lato;color:var(--ink);">' + usd(a.usd) + '</span></div>' +
+      '<div>' + (b ? badge(a.rate, b.rate) : '') + '</div></div>'; }).join('');
 
-  const Lv = L ? L.values : {};
-  const html =
-    '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px;">' +
-      '<div><h1 style="font:500 24px/1 \'Playfair Display\';margin:0;color:' + TEAL + ';">Returns</h1>' +
-      '<div style="font:400 13px/1.4 Lato;color:' + MUTED + ';margin-top:6px;">By the month the order was placed. Returns keep arriving for about 90 days, so the latest complete month is ' + (L ? lbl(L.month) : '\u2014') + '; later months are still filling in. Lower is better.</div></div></div>' +
+  root.innerHTML =
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">' +
+      '<div style="min-width:0;flex:1;"><h1 style="font:500 24px/1 \'Playfair Display\';margin:0;color:' + TEAL + ';">Returns</h1>' +
+      '<div style="font:400 13px/1.4 Lato;color:' + MUTED + ';margin-top:6px;">By the month the order was placed. Returns keep arriving for about 90 days after a month ends, so recent months are still filling in. Lower is better.</div>' + periodLine + '</div>' + picker + '</div>' +
     '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">' +
-      card('Return rate', pct(Lv.return_rate_orders), 'of ' + (L ? lbl(L.month) : '') + ' orders were returned', '<div>' + badge(Lv.return_rate_orders, avg(prior, 'return_rate_orders')) + '</div>') +
-      card('Returned revenue', pct(Lv.return_rate_revenue), 'of revenue \u00b7 ' + usdK(Lv.returned_revenue), '<div>' + badge(Lv.return_rate_revenue, avg(prior, 'return_rate_revenue')) + '</div>') +
-      card('Subscription-driven returns', subNow == null ? '\u2014' : (subNow * 100).toFixed(0) + '%', 'of returns with a reason, ' + qLbl(qNow) + ' orders',
-           '<div><span style="display:inline-block;font:700 13px/1 Lato;color:' + (subNow > subPrev ? RED : GREEN) + ';background:' + (subNow > subPrev ? '#F6E4E1' : '#E8EFE6') + ';border-radius:12px;padding:5px 10px;">' +
-           (subNow > subPrev ? '\u25B2 +' : '\u25BC \u2212') + Math.abs((subNow - subPrev) * 100).toFixed(1) + ' pts vs ' + qLbl(qPrev) + '</span></div>') +
+      card('Return rate', pct(A.rate), A.returns.toLocaleString() + ' returns', '<div>' + badge(A.rate, P && P.rate) + '</div>') +
+      card('Revenue returned', usd(A.usd), pct(A.usdPct) + ' of revenue' + (P ? ' \u00b7 ' + (prior.length === n ? usd(P.usd) + ' in ' + period(prior) : 'avg ' + usd(P.usd / prior.length) + '/mo in ' + period(prior)) : ''), '<div>' + badge(A.usdPct, P && P.usdPct) + '</div>') +
+      card('Subscription-driven returns', subNow == null ? '\u2014' : (subNow * 100).toFixed(0) + '%', 'of returns with a reason', '<div>' + (subPrev == null ? '' : badge(subNow, subPrev, 'pts')) + '</div>') +
     '</div>' +
     '<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;margin-top:12px;">' +
-      '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-width:0;"><div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin-bottom:6px;">Return rate by order month</div>' + svg + '</div>' +
+      '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-width:0;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">By order month</span>' +
+        '<span style="border:1px solid ' + TEAL + ';border-radius:8px;padding:2px;">' + tog('pct', '% of orders') + tog('usd', '$ returned') + '</span></div>' + svg +
+        '<div style="font:400 11px Lato;color:' + MUTED + ';margin-top:4px;">Shaded months are your selection. Hollow points and light bars are still filling in.</div></div>' +
       '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-width:0;display:flex;flex-direction:column;gap:9px;">' +
         '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">Why customers return</div>' +
-        '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';">Share of returns with a reason \u00b7 <b style="color:' + TEAL + ';">' + qLbl(qNow) + '</b> vs <span style="color:#7FAAAD;font-weight:700;">' + qLbl(qPrev) + '</span> orders (pts change)</div>' +
-        reasonRows +
-        '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';margin-top:auto;">A reason was recorded for ' + pct(sNow.coverage, 0) + ' of these returns.</div></div>' +
+        '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';">Share of returns with a reason \u00b7 <b style="color:' + TEAL + ';">' + period(sel) + '</b>' + (prior.length ? ' vs <span style="color:#7FAAAD;font-weight:700;">' + period(prior) + '</span> (pts change)' : '') + '</div>' +
+        reasonRows + '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';margin-top:auto;">A reason was recorded for ' + pct(RS.coverage, 0) + ' of these returns.</div></div>' +
     '</div>' +
-    (prodCards ? '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin:14px 0 8px;">Priority products \u00b7 return rate</div>' +
+    (prodCards ? '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin:14px 0 8px;">Priority products \u00b7 ' + period(sel) + ' orders</div>' +
       '<div style="display:grid;grid-template-columns:repeat(' + pri.length + ',minmax(0,1fr));gap:12px;">' + prodCards + '</div>' : '') +
-    '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed that month \u00f7 orders (excl. Amazon and Walmart); Power BI returns model. A return can carry more than one reason. Direction compares the latest complete month with the average of the three complete months before it.</div>';
-  root.innerHTML = html; root.dataset.key = key;
+    '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed in the period \u00f7 orders (excl. Amazon and Walmart); revenue returned = value of returned items; Power BI returns model. Periods are summed before dividing. Comparisons are with the months just before the selection (at least three, summed); they are marked "not final yet" while either period is still filling in. A return can carry more than one reason.</div>';
+  root.dataset.key = key;
 }
+function retState_() {
+  if (!window.__RET_SEL) { let s = null; try { s = JSON.parse(localStorage.getItem('cx_returns_sel') || 'null'); } catch (e) {} window.__RET_SEL = Object.assign({ mode: 'latest', months: [], chart: 'pct', open: false }, s || {}, { open: false }); }
+  return window.__RET_SEL;
+}
+function retSave_() { try { const s = Object.assign({}, window.__RET_SEL); delete s.open; localStorage.setItem('cx_returns_sel', JSON.stringify(s)); } catch (e) {} renderReturns(true); }
+function retTogglePicker() { retState_().open = !retState_().open; renderReturns(true); }
+function retSetMode(m) { const s = retState_(); s.mode = m; s.months = []; s.open = false; retSave_(); }
+function retToggleMonth(k) { const s = retState_(); if (s.mode !== 'custom') { s.mode = 'custom'; s.months = []; }
+  s.months = s.months.indexOf(k) >= 0 ? s.months.filter(x => x !== k) : s.months.concat(k); retSave_(); }
+function retSetChart(c) { retState_().chart = c; retSave_(); }
+window.retTogglePicker = retTogglePicker; window.retSetMode = retSetMode; window.retToggleMonth = retToggleMonth; window.retSetChart = retSetChart; window.renderReturns = renderReturns;
 
 // Contact Handling Split: a label stays inside its bar segment only if it fits the segment's actual width;
 // otherwise it moves to the column right of the bar, in the segment's color. Measured, so labels are never
