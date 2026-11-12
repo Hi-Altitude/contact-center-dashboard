@@ -10984,11 +10984,19 @@ class Component extends DCLogic {
   goToSectionFromHash = (hash) => {
     const refByHash = { 'contact-center': this.ccSectionRef, revenue: this.revSectionRef, 'platform-cost': this.platformSectionRef, 'cost-roi': this.roiSectionRef, projection: this.projSectionRef };
     if (hash === 'gorgias-floor') { this.goToFloor(); return; }
+    if (hash === 'returns') { this.goToReturns(); return; }
     const ref = refByHash[hash];
     if (ref) this.scrollToSection(ref)();
   };
   // The React ref on this section (added after the others) never attaches for reasons unclear
   // in this runtime, so it navigates by querying the DOM directly instead — same net effect.
+  // Same workaround as goToFloor: refs on sections added after the originals never attach in this runtime.
+  goToReturns = () => {
+    const c = this.containerRef.current;
+    const el = document.querySelector('[data-screen-label="Returns"]');
+    if (c && el) this.smoothScrollTo(c, el.offsetTop);
+    try { history.replaceState(null, '', '#returns'); } catch (e) {}
+  };
   goToFloor = () => {
     const c = this.containerRef.current;
     const el = document.querySelector('[data-screen-label="Gorgias Results Floor"]');
@@ -10997,7 +11005,7 @@ class Component extends DCLogic {
   };
 
   handleScroll = () => {
-    const c = this.containerRef.current, rev = this.revSectionRef.current, roi = this.roiSectionRef.current, platform = this.platformSectionRef.current, proj = this.projSectionRef.current, ret = this.returnsSectionRef.current;
+    const c = this.containerRef.current, rev = this.revSectionRef.current, roi = this.roiSectionRef.current, platform = this.platformSectionRef.current, proj = this.projSectionRef.current, ret = document.querySelector('[data-screen-label="Returns"]');
     const floorEl = document.querySelector('[data-screen-label="Gorgias Results Floor"]');
     const floor = floorEl ? { offsetTop: floorEl.offsetTop } : null;
     if (!c || !rev || !roi || !platform || !proj) return;
@@ -11544,7 +11552,7 @@ class Component extends DCLogic {
       goToRevenue: this.scrollToSection(this.revSectionRef, 'revenue'),
       goToRoi: this.scrollToSection(this.roiSectionRef, 'cost-roi'),
       goToPlatformCosts: this.scrollToSection(this.platformSectionRef, 'platform-cost'),
-      goToReturns: this.scrollToSection(this.returnsSectionRef, 'returns'),
+      goToReturns: this.goToReturns,
       returnsNavBg: activeSection === 'returns' ? 'rgba(255,255,255,.08)' : 'transparent',
       goToProjection: this.scrollToSection(this.projSectionRef, 'projection'),
       goToFloor: this.goToFloor,
