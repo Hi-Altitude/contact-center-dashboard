@@ -9689,8 +9689,11 @@ function renderReturns(force) {
     let g = '<svg viewBox="0 0 ' + W2 + ' ' + H2 + '" style="width:100%;height:auto;display:block;overflow:visible;">';
     [0, 1, 2, 3].filter(t => t < mx).forEach(t => { g += '<line x1="' + pl + '" x2="' + (W2 - prr) + '" y1="' + Y2(t) + '" y2="' + Y2(t) + '" stroke="#E1DACE" stroke-dasharray="' + (t ? '3 4' : '0') + '"></line><text x="' + (pl - 6) + '" y="' + (Y2(t) + 4) + '" text-anchor="end" style="font:400 11px Lato;fill:#7A756C;">' + t + '</text>'; });
     ls.forEach((m, i) => { if (m.month.slice(5) === '01') g += '<line x1="' + X2(i) + '" x2="' + X2(i) + '" y1="' + pt + '" y2="' + (H2 - pb) + '" stroke="#EDE7DD"></line><text x="' + (X2(i) + 4) + '" y="' + (H2 - 14) + '" style="font:700 11px Lato;fill:#7A756C;">' + m.month.slice(0, 4) + '</text>'; });
-    const aMark = ls.findIndex(m => m.month === '2026-03');
-    if (aMark > 0) g += '<line x1="' + X2(aMark) + '" x2="' + X2(aMark) + '" y1="' + pt + '" y2="' + (H2 - pb) + '" stroke="' + TEAL + '" stroke-dasharray="2 3"></line><text x="' + (X2(aMark) - 4) + '" y="' + (pt + 10) + '" text-anchor="end" style="font:700 10px Lato;fill:' + TEAL + ';">AfterShip portal</text>';
+    // Event markers: warehouse move (Saddle Creek -> ShipBob, Jan 2025) and the AfterShip returns portal (Mar 2026).
+    [['2025-01', 'ShipBob warehouse', '#B9852F'], ['2026-03', 'AfterShip portal', TEAL]].forEach(([mm, txt, col]) => {
+      const k = ls.findIndex(m => m.month === mm); if (k <= 0) return;
+      g += '<line x1="' + X2(k) + '" x2="' + X2(k) + '" y1="' + pt + '" y2="' + (H2 - pb) + '" stroke="' + col + '" stroke-dasharray="2 3"></line>' +
+           '<text x="' + (X2(k) - 4) + '" y="' + (pt + 10) + '" text-anchor="end" style="font:700 10px Lato;fill:' + col + ';">' + txt + '</text>'; });
     g += '<polyline points="' + solid + '" fill="none" stroke="' + TEAL + '" stroke-width="2.2"></polyline>';
     if (dashed) g += '<polyline points="' + dashed + '" fill="none" stroke="' + TEAL + '" stroke-width="2.2" stroke-dasharray="5 4"></polyline>';
     ls.forEach((m, i) => { if (flagged(m) || !done(m)) g += '<circle cx="' + pts[i][0].toFixed(1) + '" cy="' + pts[i][1].toFixed(1) + '" r="3.5" fill="#fff" stroke="' + (flagged(m) ? '#B9852F' : TEAL) + '" stroke-width="2"></circle>'; });
@@ -9712,7 +9715,7 @@ function renderReturns(force) {
       '</div>' + g +
       '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">' + strip + '</div>' +
       '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:8px;">Yearly figures use complete months only. Dashed: order months still receiving returns (complete 120 days after month end). ' +
-      '<span style="color:#B9852F;font-weight:700;">\u25CB</span> Dec 2024\u2013Feb 2025: warehouse move; many rows uncoded, may include undeliverables.</div></div>';
+      '<span style="color:#B9852F;font-weight:700;">\u25CB</span> Dec 2024\u2013Feb 2025: move from Saddle Creek to ShipBob; many rows uncoded, may include undeliverables.</div></div>';
   })();
 
   // ---- priority products (selected period; rate and $) ----
