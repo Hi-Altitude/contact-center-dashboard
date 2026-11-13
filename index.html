@@ -9570,14 +9570,15 @@ function renderReturns(force) {
   else if (S.mode === 'last3') selKeys = mature.slice(-3).map(m => m.month);
   else if (S.mode === 'ytd') { const y = months[months.length - 1].month.slice(0, 4); selKeys = months.filter(m => m.month.slice(0, 4) === y).map(m => m.month); }
   else selKeys = (S.months || []).filter(k => months.some(m => m.month === k));
-  if (!selKeys.length && lastMature) selKeys = [lastMature];
+  if (!selKeys.length) selKeys = mature.slice(-3).map(m => m.month);
   selKeys.sort();
   const idx = k => months.findIndex(m => m.month === k);
   const sel = selKeys.map(k => months[idx(k)]).filter(Boolean);
-  // Baseline: the months just before the selection, at least three (a single month is too noisy to compare
-  // against one other month), summed then divided. Same rule for every card.
-  const firstI = idx(selKeys[0]), n = sel.length, nb = Math.max(n, 3);
-  const prior = firstI - nb >= 0 ? months.slice(firstI - nb, firstI) : (firstI > 0 ? months.slice(0, firstI) : []);
+  // Baseline: the same number of months immediately before the selection, summed then divided. Same rule for every card.
+  const firstI = idx(selKeys[0]), n = sel.length, nb = n;   // previous period of the same length
+  // Only a COMPLETE previous period counts: comparing three months with whatever one month happens to exist would
+  // read as like-for-like when it isn't. Without enough history, no comparison is shown.
+  const prior = firstI - nb >= 0 ? months.slice(firstI - nb, firstI) : [];
   const finalCmp = prior.length > 0 && sel.every(isMature) && prior.every(isMature);
   const period = ms => !ms.length ? '' : (ms.length === 1 ? lbl(ms[0].month) : (ms.length === (idx(ms[ms.length - 1].month) - idx(ms[0].month) + 1)
     ? short(ms[0].month) + (ms[0].month.slice(0, 4) !== ms[ms.length - 1].month.slice(0, 4) ? ' ' + ms[0].month.slice(0, 4) : '') + '\u2013' + lbl(ms[ms.length - 1].month)
@@ -9618,7 +9619,7 @@ function renderReturns(force) {
   const subNow = RS.shares['Didn\u2019t need this shipment'], subPrev = RP ? RP.shares['Didn\u2019t need this shipment'] : null;
 
   // ---- picker ----
-  const presets = [['latest', 'Latest complete month'], ['last3', 'Last 3 complete months'], ['ytd', 'Year to date']];
+  const presets = [['last3', 'Last 3 complete months (default)'], ['latest', 'Latest complete month'], ['ytd', 'Year to date']];
   const picker = '<div style="position:relative;">' +
     '<button onclick="retTogglePicker()" style="display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--sage-deep);border-radius:10px;padding:10px 16px;font:700 16px/1 Lato;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);cursor:pointer;">Filter months <span style="font-size:11px;">\u25BC</span></button>' +
     (S.open ? '<div style="position:absolute;right:0;top:calc(100% + 6px);z-index:50;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.12);padding:12px;width:270px;">' +
@@ -9633,7 +9634,8 @@ function renderReturns(force) {
   const periodLine = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;">' +
     '<span style="font:700 12px/1 Lato;letter-spacing:.06em;text-transform:uppercase;color:' + MUTED + ';">Showing</span>' +
     '<span style="font:700 14px/1 Lato;color:var(--ink);background:#E8EFE6;border-radius:8px;padding:6px 10px;">' + period(sel) + ' orders</span>' +
-    (prior.length ? '<span style="font:400 13px/1 Lato;color:' + MUTED + ';">compared with ' + period(prior) + '</span>' : '') +
+    (prior.length ? '<span style="font:400 13px/1 Lato;color:' + MUTED + ';">compared with ' + period(prior) + '</span>'
+                  : '<span style="font:400 13px/1 Lato;color:' + MUTED + ';">No earlier period to compare yet (returns data starts ' + lbl(start) + ')</span>') +
     (openMonths.length ? '<span style="font:700 12px/1 Lato;color:#8A6A1F;background:#F5EBD8;border-radius:8px;padding:6px 10px;">Includes months still filling in (' + openMonths.map(m => short(m.month) + ' ' + (inLbl[m.values.returns_maturity] || '')).join(', ') + '): figures will rise</span>' : '') + '</div>';
 
   // ---- trend chart: full history, selection highlighted; % or $ ----
@@ -9756,14 +9758,14 @@ function renderReturns(force) {
     longRun +
     (prodCards ? '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin:14px 0 8px;">Priority products \u00b7 ' + period(sel) + ' orders</div>' +
       '<div style="display:grid;grid-template-columns:repeat(' + pri.length + ',minmax(0,1fr));gap:12px;">' + prodCards + '</div>' : '') +
-    '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed in the period \u00f7 orders (excl. Amazon and Walmart); revenue returned = value of returned items; Power BI returns model (returns created through AfterShip). Earlier order months are excluded because returns handled before the portal launched (soft launch mid-February, full launch March 20, 2026) are not in the data. Periods are summed before dividing. Comparisons are with the months just before the selection (at least three, summed); they are marked "not final yet" while either period is still filling in. A return can carry more than one reason.</div>';
+    '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed in the period \u00f7 orders (excl. Amazon and Walmart); revenue returned = value of returned items; Power BI returns model (returns created through AfterShip). Earlier order months are excluded because returns handled before the portal launched (soft launch mid-February, full launch March 20, 2026) are not in the data. Periods are summed before dividing. Comparisons are with the same number of months immediately before the selection; they are marked "not final yet" while either period is still filling in. A return can carry more than one reason.</div>';
   root.dataset.key = key;
 }
 function retState_() {
-  if (!window.__RET_SEL) { let s = null; try { s = JSON.parse(localStorage.getItem('cx_returns_sel') || 'null'); } catch (e) {} window.__RET_SEL = Object.assign({ mode: 'latest', months: [], chart: 'pct', open: false }, s || {}, { open: false }); }
+  if (!window.__RET_SEL) { let s = null; try { s = JSON.parse(localStorage.getItem('cx_returns_sel_v2') || 'null'); } catch (e) {} window.__RET_SEL = Object.assign({ mode: 'last3', months: [], chart: 'pct', open: false }, s || {}, { open: false }); }
   return window.__RET_SEL;
 }
-function retSave_() { try { const s = Object.assign({}, window.__RET_SEL); delete s.open; localStorage.setItem('cx_returns_sel', JSON.stringify(s)); } catch (e) {} renderReturns(true); }
+function retSave_() { try { const s = Object.assign({}, window.__RET_SEL); delete s.open; localStorage.setItem('cx_returns_sel_v2', JSON.stringify(s)); } catch (e) {} renderReturns(true); }
 function retTogglePicker() { retState_().open = !retState_().open; renderReturns(true); }
 function retSetMode(m) { const s = retState_(); s.mode = m; s.months = []; s.open = false; retSave_(); }
 function retToggleMonth(k) { const s = retState_(); if (s.mode !== 'custom') { s.mode = 'custom'; s.months = []; }
