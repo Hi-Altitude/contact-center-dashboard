@@ -9604,13 +9604,22 @@ function renderReturns(force) {
 
   // ---- direction badges: lower is better; gray "not final yet" when a period is still filling in ----
   const pill = (txt, col, bg) => '<span style="display:inline-block;font:700 13px/1 Lato;color:' + col + ';background:' + bg + ';border-radius:12px;padding:5px 10px;">' + txt + '</span>';
-  const badge = (now, base, unit) => {
+  // Change badge in the measure's own unit, naming the comparison period and showing the previous value:
+  //   kind 'rate'  (fraction, e.g. return rate)  -> "+1.37 pts vs Jun 2026 (was 5.94%)"
+  //   kind 'share' (fraction, reason share)       -> "+3.9 pts vs Jun 2026 (was 29%)"
+  //   kind 'usd'                                  -> "+$1.6K vs Jun 2026 (was $14.6K)"
+  // Higher is worse for every returns measure: up = red, down = green.
+  const badge = (now, base, kind) => {
     if (now == null || base == null || !prior.length) return '';
-    if (!finalCmp) return pill('\u25CB Not final yet', MUTED, '#F0EDE7');
-    const d = unit === 'pts' ? (now - base) * 100 : (base ? (now - base) / base * 100 : 0);
-    const flat = unit === 'pts' ? Math.abs(d) < 0.5 : Math.abs(d) < 2;
-    const txt = (flat ? '\u25B6 Flat' : (d > 0 ? '\u25B2 ' : '\u25BC ') + (unit === 'pts' ? (d > 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ' pts' : Math.abs(Math.round(d)) + '%'));
-    return pill(txt + ' vs ' + period(prior), flat ? MUTED : (d > 0 ? RED : GREEN), flat ? '#F0EDE7' : (d > 0 ? '#F6E4E1' : '#E8EFE6'));
+    const was = kind === 'usd' ? usd(base) : (kind === 'share' ? (base * 100).toFixed(0) + '%' : pct(base));
+    if (!finalCmp) return pill('\u25CB Not final yet \u00b7 ' + period(prior) + ' was ' + was, MUTED, '#F0EDE7');
+    const rel = base ? (now - base) / base : 0;
+    const flat = kind === 'share' ? Math.abs(now - base) * 100 < 0.5 : Math.abs(rel) < 0.02;
+    let delta;
+    if (kind === 'usd') delta = (now >= base ? '+' : '\u2212') + usd(Math.abs(now - base));
+    else delta = (now >= base ? '+' : '\u2212') + (Math.abs(now - base) * 100).toFixed(kind === 'share' ? 1 : 2) + ' pts';
+    const txt = (flat ? '\u25B6 Flat' : (now > base ? '\u25B2 ' : '\u25BC ') + delta) + ' vs ' + period(prior) + ' (was ' + was + ')';
+    return pill(txt, flat ? MUTED : (now > base ? RED : GREEN), flat ? '#F0EDE7' : (now > base ? '#F6E4E1' : '#E8EFE6'));
   };
   const card = (title, big, sub, extra) => '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:6px;min-width:0;">' +
     '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">' + title + '</div>' +
@@ -9729,21 +9738,66 @@ function renderReturns(force) {
 
   // ---- priority products (selected period; rate and $) ----
   const pri = feed.returns.priority_products || [];
-  const prodCards = pri.map(name => { const a = prodAgg(sel, name), b = prior.length ? prodAgg(prior, name) : null; if (!a) return '';
-    return '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:0;display:flex;flex-direction:column;gap:6px;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font:700 15px/1 Lato;color:var(--ink);">' + esc(name) + '</span>' +
-      '<span style="font:600 24px/1 \'Playfair Display\';color:var(--ink);">' + pct(a.rate) + '</span></div>' +
-      '<div style="display:flex;justify-content:space-between;align-items:baseline;font:400 13px Lato;color:' + MUTED + ';"><span>Revenue returned</span><span style="font:700 15px Lato;color:var(--ink);">' + usd(a.usd) + '</span></div>' +
-      '<div>' + (b ? badge(a.rate, b.rate) : '') + '</div></div>'; }).join('');
+  // ---- priority products: was -> now tracks on a SHARED zero-based scale per metric across products ----
+  // Dot position = the value (comparable across cards); segment length = the change in the metric's own units;
+  // label = relative change. Scale max = largest value shown (either period, any product), rounded up to a clean number.
+  const niceCeil = v => { if (!(v > 0)) return 1; const mag = Math.pow(10, Math.floor(Math.log10(v)));
+    for (const k of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (k * mag >= v * 1.02) return k * mag; return 10 * mag; };
+  const pAgg = pri.map(name => ({ name, a: prodAgg(sel, name), b: prior.length ? prodAgg(prior, name) : null })).filter(x => x.a);
+  const allRates = [].concat(...pAgg.map(x => [x.a.rate, x.b && x.b.rate])).filter(v => v != null);
+  const allUsd = [].concat(...pAgg.map(x => [x.a.usd, x.b && x.b.usd])).filter(v => v != null);
+  const rateMax = niceCeil(Math.max(...allRates, 0) * 100) / 100, usdMax = niceCeil(Math.max(...allUsd, 0));
+  const track = (now, base, max, fmtAxis, title) => {
+    const W3 = 300, x = v => 8 + Math.min(1, Math.max(0, v / max)) * (W3 - 16);
+    let t = '<svg viewBox="0 0 ' + W3 + ' 40" style="width:100%;height:auto;display:block;" role="img"><title>' + esc(title) + '</title>' +
+      '<line x1="8" y1="20" x2="' + (W3 - 8) + '" y2="20" stroke="#DDD6CA" stroke-width="5" stroke-linecap="round"></line>';
+    if (base != null && prior.length) {
+      const rel = base ? (now - base) / base : 0, flat = Math.abs(rel) < 0.02;
+      const col = !finalCmp || flat ? '#8E887C' : (now > base ? RED : '#5F7D5E');
+      t += '<line x1="' + x(base).toFixed(1) + '" y1="20" x2="' + x(now).toFixed(1) + '" y2="20" stroke="' + col + '" stroke-width="5"' + (finalCmp ? '' : ' stroke-dasharray="3 3"') + '></line>' +
+        '<circle cx="' + x(base).toFixed(1) + '" cy="20" r="5" fill="#FFFFFF" stroke="#8E887C" stroke-width="2"></circle>' +
+        '<circle cx="' + x(now).toFixed(1) + '" cy="20" r="6.5" fill="' + col + '"></circle>' +
+        '<text x="' + ((x(base) + x(now)) / 2).toFixed(1) + '" y="9" text-anchor="middle" style="font:700 12px Lato;fill:' + col + ';">' +
+          (!finalCmp ? 'not final' : (flat ? 'flat' : (rel > 0 ? '+' : '\u2212') + Math.abs(Math.round(rel * 100)) + '%')) + '</text>';
+    } else {
+      t += '<circle cx="' + x(now).toFixed(1) + '" cy="20" r="6.5" fill="' + TEAL + '"></circle>';
+    }
+    t += '<text x="8" y="39" style="font:400 10px Lato;fill:#7A756C;">' + fmtAxis(0) + '</text>' +
+         '<text x="' + (W3 - 8) + '" y="39" text-anchor="end" style="font:400 10px Lato;fill:#7A756C;">' + fmtAxis(max) + '</text></svg>';
+    return t;
+  };
+  const axPct = v => (v * 100).toFixed(v * 100 % 1 ? 1 : 0) + '%', axUsd = v => v >= 1000 ? '$' + (v / 1000) + 'K' : '$' + v;
+  const prodCards = pAgg.map(({ name, a, b }) => {
+    const cmpLine = (fmt, now, base, unitDelta) => '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';">' +
+      (b ? period(prior) + ' ' + fmt(base) + ' \u2192 ' + period(sel) + ' ' + fmt(now) + ' \u00b7 ' + unitDelta : period(sel)) + '</div>';
+    const ptsD = (b && a.rate != null && b.rate != null) ? (a.rate >= b.rate ? '+' : '\u2212') + (Math.abs(a.rate - b.rate) * 100).toFixed(2) + ' pts' : '';
+    const usdD = b ? (a.usd >= b.usd ? '+' : '\u2212') + usd(Math.abs(a.usd - b.usd)) : '';
+    const head = (label, sub, value) => '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">' +
+      '<span style="font:700 12px/1.2 Lato;color:var(--ink);">' + label + ' <span style="font-weight:400;color:' + MUTED + ';">\u00b7 ' + sub + '</span></span>' +
+      '<span style="font:600 22px/1 \'Playfair Display\';color:var(--ink);">' + value + '</span></div>';
+    return '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:0;display:flex;flex-direction:column;gap:4px;">' +
+      '<div style="font:700 15px/1 Lato;color:var(--ink);margin-bottom:4px;">' + esc(name) + '</div>' +
+      head('Return rate', '% of orders returned', pct(a.rate)) +
+      track(a.rate, b && b.rate, rateMax, axPct, name + ' return rate ' + pct(a.rate) + (b ? ', previously ' + pct(b.rate) : '')) +
+      cmpLine(v => pct(v), a.rate, b && b.rate, ptsD) +
+      '<div style="height:8px;"></div>' +
+      head('Revenue returned', '$ value of returned items', usd(a.usd)) +
+      track(a.usd, b && b.usd, usdMax, axUsd, name + ' revenue returned ' + usd(a.usd) + (b ? ', previously ' + usd(b.usd) : '')) +
+      cmpLine(usd, a.usd, b && b.usd, usdD) + '</div>'; }).join('');
+  const prodLegend = pAgg.length && prior.length ? '<div style="display:flex;gap:16px;flex-wrap:wrap;font:400 11px Lato;color:' + MUTED + ';margin-top:6px;">' +
+    '<span>\u25CB ' + period(prior) + ' (previous)</span><span>\u25CF ' + period(sel) + ' (current) \u2014 red = up, green = down</span>' +
+    '<span>Same scale on every card: return rate 0\u2013' + axPct(rateMax) + ', revenue ' + axUsd(0) + '\u2013' + axUsd(usdMax) + '</span></div>' : '';
 
   root.innerHTML =
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">' +
       '<div style="min-width:0;flex:1;"><h1 style="font:500 24px/1 \'Playfair Display\';margin:0;color:' + TEAL + ';">Returns</h1>' +
       '<div style="font:400 13px/1.4 Lato;color:' + MUTED + ';margin-top:6px;">By the month the order was placed, from ' + lbl(start) + ' orders (the first month fully captured by the AfterShip returns portal). Returns keep arriving for about 90 days after a month ends, so recent months are still filling in. Lower is better.</div>' + periodLine + '</div>' + picker + '</div>' +
     '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">' +
-      card('Return rate', pct(A.rate), A.returns.toLocaleString() + ' returns', '<div>' + badge(A.rate, P && P.rate) + '</div>') +
-      card('Revenue returned', usd(A.usd), pct(A.usdPct) + ' of revenue' + (P ? ' \u00b7 ' + (prior.length === n || prior.length === 1 ? usd(P.usd) + ' in ' + period(prior) : 'avg ' + usd(P.usd / prior.length) + '/mo in ' + period(prior)) : ''), '<div>' + badge(A.usdPct, P && P.usdPct) + '</div>') +
-      card('Subscription-driven returns', subNow == null ? '\u2014' : (subNow * 100).toFixed(0) + '%', 'of returns with a reason', '<div>' + (subPrev == null ? '' : badge(subNow, subPrev, 'pts')) + '</div>') +
+      card('Return rate \u00b7 % of orders returned', pct(A.rate), A.returns.toLocaleString() + ' returns', '<div>' + badge(A.rate, P && P.rate, 'rate') + '</div>') +
+      card('Revenue returned \u00b7 $ value of returned items', usd(A.usd), pct(A.usdPct) + ' of revenue',
+           '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;">' + badge(A.usd, P && P.usd, 'usd') +
+           (P ? '<span style="font:400 12px Lato;color:' + MUTED + ';">As % of revenue: ' + badge(A.usdPct, P.usdPct, 'rate').replace(/<span[^>]*>|<\/span>/g, '') + '</span>' : '') + '</div>') +
+      card('Subscription-driven returns \u00b7 % of reasons', subNow == null ? '\u2014' : (subNow * 100).toFixed(0) + '%', 'of returns with a recorded reason', '<div>' + (subPrev == null ? '' : badge(subNow, subPrev, 'share')) + '</div>') +
     '</div>' +
     '<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;margin-top:12px;">' +
       '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-width:0;">' +
@@ -9757,7 +9811,7 @@ function renderReturns(force) {
     '</div>' +
     longRun +
     (prodCards ? '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin:14px 0 8px;">Priority products \u00b7 ' + period(sel) + ' orders</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(' + pri.length + ',minmax(0,1fr));gap:12px;">' + prodCards + '</div>' : '') +
+      '<div style="display:grid;grid-template-columns:repeat(' + pAgg.length + ',minmax(0,1fr));gap:12px;">' + prodCards + '</div>' + prodLegend : '') +
     '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed in the period \u00f7 orders (excl. Amazon and Walmart); revenue returned = value of returned items; Power BI returns model (returns created through AfterShip). Earlier order months are excluded because returns handled before the portal launched (soft launch mid-February, full launch March 20, 2026) are not in the data. Periods are summed before dividing. Comparisons are with the same number of months immediately before the selection; they are marked "not final yet" while either period is still filling in. A return can carry more than one reason.</div>';
   root.dataset.key = key;
 }
