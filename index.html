@@ -5480,16 +5480,6 @@ a:hover{color:var(--ink-deep);}
       <div sc-camel-on-click="{{ goToProjection }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;background:{{ projNavBg }};font:700 16px/1 'Lato';cursor:pointer;">
         <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);border:1.5px solid var(--ink-deep);flex-shrink:0;"></span>Automation Projection
       </div>
-      <div style="display:flex;align-items:stretch;">
-        <div style="width:20px;flex-shrink:0;position:relative;">
-          <div style="position:absolute;left:11px;top:-6px;bottom:50%;width:1.5px;background:rgba(255,255,255,.2);"></div>
-          <div style="position:absolute;left:11px;top:50%;width:10px;height:1.5px;background:rgba(255,255,255,.2);"></div>
-        </div>
-        <div sc-camel-on-click="{{ goToFloor }}" style="flex:1;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:{{ floorNavBg }};font:700 14px/1.2 'Lato';cursor:pointer;">
-          <span style="width:7px;height:7px;border-radius:50%;background:var(--gold);border:1.5px dashed #EDE6D8;flex-shrink:0;"></span>
-          <span>Gorgias Day-50 Floor <span style="font:400 11px/1 'Lato';color:#B9B2A4;">(planning only)</span></span>
-        </div>
-      </div>
     </div>
     <div data-sidebar-spacer="" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;">
       <button sc-camel-on-click="{{ clearSession }}" style="width:100%;background:transparent;color:#6B6559;border:1px dashed #4A453B;border-radius:6px;padding:8px 10px;font:700 11px/1 'Lato';letter-spacing:.04em;text-transform:uppercase;cursor:pointer;">Reset Login (Test)</button>
@@ -7505,171 +7495,6 @@ a:hover{color:var(--ink-deep);}
 
       <div style="text-align:center;font:400 12px/1.3 'Lato';color:var(--muted);margin-top:2px;">Projection assumptions: flat {{ growthRateLabel }} contact-volume growth from a {{ baseTicketsLabel }}/yr Email+Chat+SMS baseline · Gorgias is a flat annual fee paid quarterly (Helpdesk + SMS with per-unit overage past cap; AI Agent steps up the graduated tier schedule, cheaper per interaction at higher tiers) · Kustomer's current $20,666/yr covers seats only, excluding the failed AI automation add-on already paid for and abandoned separately, and ends Aug 31, 2026 · FlipCX cost and automation rate are independently configurable above · Grupo NOA digital labor savings modeled at $7.55/hr against real schedule hours (2 agents × 40 hrs/wk, 35 hr/wk floor per agent), not a per-contact rate; Phone/FlipCX labor kept on the existing per-contact model · {{ realizedPct }}% of freed capacity assumed actually captured via reduced/cross-trained scheduling. Any month already present in the live sheet always shows as Actual, regardless of this projection.</div>
 
-    </section>
-
-    <section data-report-section="" data-screen-label="Gorgias Results Floor" ref="{{ gorgiasSectionRef }}" style="flex-shrink:0;padding:24px 36px 32px;display:flex;flex-direction:column;gap:14px;min-height:100vh;box-sizing:border-box;scroll-snap-align:start;scroll-snap-stop:always;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-        <div>
-          <h1 style="font:500 32px/1 'Playfair Display';margin:0;color:var(--sage-deep);letter-spacing:-.01em;">Automation projection: Gorgias + FlipCX</h1>
-          <div style="font:400 13px/1.4 'Lato';color:var(--muted);margin-top:6px;">Keys off the same assumption sliders as Automation Projection above — a temporary snapshot, retired once the platform is mature.</div>
-        </div>
-        <div style="display:flex;gap:10px;">
-          <div style="display:inline-block;background:var(--sage-tint);border-radius:20px;padding:6px 16px;font:700 12px/1 'Lato';letter-spacing:.08em;text-transform:uppercase;color:var(--sage-deep);">Assumption · Minimum Automation Floor (Day 50)</div>
-          <div style="display:inline-block;background:#F5F2EE;border:1px solid var(--line);border-radius:20px;padding:6px 16px;font:700 12px/1 'Lato';letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Day 50 After Go-Live</div>
-        </div>
-      </div>
-
-      <sc-if value="{{ hasFloorActuals }}" hint-placeholder-val="{{ false }}">
-      <div style="background:var(--card);border:1.5px solid var(--ai);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
-          <span style="font:700 13px/1 'Lato';letter-spacing:.08em;text-transform:uppercase;color:var(--ai);">Actual vs. Projected Automation</span>
-          <span style="font:400 12px/1.3 'Lato';color:var(--muted);">Sheet actuals against this scenario's ramp, at each month's midpoint</span>
-        </div>
-        <sc-for list="{{ floorActualRows }}" as="m" hint-placeholder-count="1">
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 24px;padding-top:8px;border-top:1px solid var(--line);">
-            <div style="min-width:110px;"><div style="font:700 14px/1.2 'Lato';color:var(--ink);">{{ m.month }}</div><div style="font:400 12px/1.2 'Lato';color:var(--muted);">{{ m.dayLabel }}</div></div>
-            <sc-for list="{{ m.cells }}" as="c" hint-placeholder-count="4">
-              <div style="min-width:120px;">
-                <div style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);">{{ c.label }}</div>
-                <div style="display:flex;align-items:baseline;gap:6px;margin-top:3px;"><span style="font:500 22px/1 'Playfair Display';color:var(--ink);">{{ c.actualLabel }}</span><span style="font:400 12px/1 'Lato';color:var(--muted);">vs {{ c.projLabel }}</span></div>
-                <div style="font:700 12px/1.3 'Lato';color:{{ c.gapColor }};">{{ c.gapLabel }}</div>
-              </div>
-            </sc-for>
-          </div>
-        </sc-for>
-      </div>
-      </sc-if>
-
-      <div style="position:sticky;top:12px;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font:700 11px/1 'Lato';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);">Scenario</span>
-          <div style="display:flex;gap:6px;">
-            <span sc-camel-on-click="{{ selectConservative }}" style="cursor:pointer;font:700 11px/1 'Lato';letter-spacing:.04em;text-transform:uppercase;padding:6px 13px;border-radius:16px;background:{{ conservativeBg }};color:{{ conservativeColor }};border:1.5px solid var(--ink-deep);">Conservative</span>
-            <span sc-camel-on-click="{{ selectBase }}" style="cursor:pointer;font:700 11px/1 'Lato';letter-spacing:.04em;text-transform:uppercase;padding:6px 13px;border-radius:16px;background:{{ baseBg }};color:{{ baseColor }};border:1.5px solid var(--ink-deep);">Base</span>
-            <span sc-camel-on-click="{{ selectAggressive }}" style="cursor:pointer;font:700 11px/1 'Lato';letter-spacing:.04em;text-transform:uppercase;padding:6px 13px;border-radius:16px;background:{{ aggressiveBg }};color:{{ aggressiveColor }};border:1.5px solid var(--ink-deep);">Aggressive</span>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
-          <div>
-            <div style="display:flex;justify-content:space-between;font:700 12px/1 'Lato';margin-bottom:5px;"><span>Email Target Automation</span><span style="color:#B0842A;">{{ emailTargetPct }}%</span></div>
-            <input type="range" min="50" max="100" step="1" value="{{ emailTargetPct }}" sc-camel-on-change="{{ setEmailTarget }}" style="width:100%;accent-color:#B0842A;">
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;font:700 12px/1 'Lato';margin-bottom:5px;"><span>Chat Target Automation</span><span style="color:var(--ink-deep);">{{ chatTargetPct }}%</span></div>
-            <input type="range" min="50" max="100" step="1" value="{{ chatTargetPct }}" sc-camel-on-change="{{ setChatTarget }}" style="width:100%;accent-color:var(--ink-deep);">
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;font:700 12px/1 'Lato';margin-bottom:5px;"><span>SMS Target Automation</span><span style="color:#AF4848;">{{ smsTargetPct }}%</span></div>
-            <input type="range" min="50" max="100" step="1" value="{{ smsTargetPct }}" sc-camel-on-change="{{ setSmsTarget }}" style="width:100%;accent-color:#AF4848;">
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;font:700 12px/1 'Lato';margin-bottom:5px;"><span>FlipCX (Phone) Target Automation</span><span style="color:var(--phone-deep);">{{ flipTargetPct }}%</span></div>
-            <input type="range" min="20" max="100" step="1" value="{{ flipTargetPct }}" sc-camel-on-change="{{ setFlipTarget }}" style="width:100%;accent-color:var(--phone-deep);">
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;font:700 12px/1 'Lato';margin-bottom:5px;"><span>FlipCX Monthly Cost</span><span style="color:var(--phone-deep);">{{ flipCostLabel }}/mo</span></div>
-            <input type="range" min="3000" max="10000" step="50" value="{{ flipCostMonthly }}" sc-camel-on-change="{{ setFlipCost }}" style="width:100%;accent-color:var(--phone-deep);">
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;font:700 12px/1 'Lato';margin-bottom:5px;"><span>Contact Volume Growth</span><span style="color:var(--muted);">{{ volumeGrowthPct }}%/yr</span></div>
-            <input type="range" min="0" max="30" step="1" value="{{ volumeGrowthPct }}" sc-camel-on-change="{{ setVolumeGrowth }}" style="width:100%;accent-color:var(--muted);">
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;font:700 12px/1 'Lato';margin-bottom:5px;"><span>Labor Cost Savings Realized</span><span style="color:var(--sage-deep);">{{ realizedPct }}%</span></div>
-            <input type="range" min="0" max="100" step="5" value="{{ realizedPct }}" sc-camel-on-change="{{ setRealizedPct }}" style="width:100%;accent-color:var(--sage-deep);">
-          </div>
-        </div>
-      </div>
-
-      <div style="background:#F5EBD8;border:1.5px dashed #C9A35E;border-radius:12px;padding:14px 24px;">
-        <span style="font:400 15px/1.5 'Lato';color:#5C4419;">Gorgias contractually commits to its <strong style="font-weight:700;">"50 in 50"</strong> promise — Email, Chat &amp; SMS automation at a floor of 50% by Day 50 post-launch. This snapshot models that Day-50 floor using the SAME target sliders as Automation Projection above. These are <strong style="font-weight:700;">planning assumptions only</strong> — not commitments, forecasts, or guaranteed outcomes.</span>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
-          <div style="min-width:0;">
-            <div style="font:700 14px/1 'Lato';letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Omnichannel Automation Floor</div>
-            <div style="font:400 13px/1.3 'Lato';color:var(--muted);">Weighted across Email, Chat, SMS &amp; Phone contact volume</div>
-          </div>
-          <div style="flex-shrink:0;font:500 clamp(32px,4vw,56px)/1 'Playfair Display';color:var(--ai);white-space:nowrap;">~{{ floorOmniPct }}</div>
-        </div>
-        <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;">
-          <div style="min-width:0;">
-            <div style="font:700 14px/1 'Lato';letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Assumed Annual Platform Spend</div>
-            <div style="display:flex;gap:14px;margin-top:4px;">
-              <div style="min-width:0;"><div style="font:500 18px/1 'Playfair Display';color:var(--ink);white-space:nowrap;">{{ floorGorgiasLabel }}</div><div style="font:400 12px/1.3 'Lato';color:var(--muted);white-space:nowrap;">Gorgias · {{ floorGorgiasSharePct }}%</div></div>
-              <div style="min-width:0;"><div style="font:500 18px/1 'Playfair Display';color:var(--ink);white-space:nowrap;">{{ floorFlipLabel }}</div><div style="font:400 12px/1.3 'Lato';color:var(--muted);white-space:nowrap;">FlipCX · {{ floorFlipSharePct }}%</div></div>
-            </div>
-          </div>
-          <div style="flex-shrink:0;font:500 clamp(24px,3.5vw,40px)/1 'Playfair Display';color:var(--ink);white-space:nowrap;">{{ floorTotalSpendLabel }}</div>
-        </div>
-      </div>
-
-      <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:16px;min-height:0;">
-        <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;display:flex;flex-direction:column;">
-          <div style="font:700 15px/1 'Lato';letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:4px;">Assumed Automation Rate by Channel</div>
-          <div style="font:400 13px/1.3 'Lato';color:var(--muted);margin-bottom:14px;">Email, Chat &amp; SMS held at the Day-50 target · Phone held at FlipCX's target rate</div>
-          <div style="display:flex;flex-direction:column;gap:14px;flex:1;justify-content:center;">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="flex-shrink:0;width:48px;font:700 12px/1.1 'Lato';letter-spacing:.04em;text-transform:uppercase;text-align:right;">Email</div>
-              <div style="flex:1;display:flex;height:24px;border-radius:6px;overflow:hidden;font:700 12px/1 'Lato';">
-                <div style="width:{{ floorEmailAgentPct }}%;background:#B0842A;display:flex;align-items:center;justify-content:center;white-space:nowrap;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ floorEmailAgentPct }}% agent-handled</div>
-                <div style="width:{{ floorEmailTargetPct }}%;background:#F0DBA6;display:flex;align-items:center;justify-content:center;white-space:nowrap;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ floorEmailTargetPct }}% automated</div>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="flex-shrink:0;width:48px;font:700 12px/1.1 'Lato';letter-spacing:.04em;text-transform:uppercase;text-align:right;">Phone</div>
-              <div style="flex:1;display:flex;height:24px;border-radius:6px;overflow:hidden;font:700 12px/1 'Lato';">
-                <div style="width:{{ floorVoiceAgentPct }}%;background:var(--phone-deep);display:flex;align-items:center;justify-content:center;white-space:nowrap;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ floorVoiceAgentPct }}% agent-handled</div>
-                <div style="width:{{ floorVoiceTargetPct }}%;background:#E4D3E8;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;box-sizing:border-box;white-space:nowrap;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ floorVoiceTargetPct }}% automated</div>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="flex-shrink:0;width:48px;font:700 12px/1.1 'Lato';letter-spacing:.04em;text-transform:uppercase;text-align:right;">Chat</div>
-              <div style="flex:1;position:relative;display:flex;height:24px;border-radius:6px;overflow:hidden;font:700 12px/1 'Lato';">
-                <div style="width:{{ floorChatAgentPct }}%;background:#1D271D;"></div>
-                <div style="width:{{ floorChatTargetPct }}%;background:#A9B3A1;display:flex;align-items:center;justify-content:flex-start;padding-left:100px;box-sizing:border-box;white-space:nowrap;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ floorChatTargetPct }}% automated</div>
-                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#fff;font:700 12px/1 'Lato';white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ floorChatAgentPct }}% agent-handled</span>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="flex-shrink:0;width:48px;font:700 12px/1.1 'Lato';letter-spacing:.04em;text-transform:uppercase;text-align:right;">SMS</div>
-              <div style="flex:1;display:flex;height:24px;border-radius:6px;overflow:hidden;font:700 12px/1 'Lato';">
-                <div style="width:{{ floorSmsAgentPct }}%;background:#8A3C3A;display:flex;align-items:center;justify-content:center;white-space:nowrap;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ floorSmsAgentPct }}% agent-handled</div>
-                <div style="width:{{ floorSmsTargetPct }}%;background:#E3C2C1;display:flex;align-items:center;justify-content:center;white-space:nowrap;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.55);">{{ floorSmsTargetPct }}% automated</div>
-              </div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line);">
-            <span style="display:inline-flex;border-radius:4px;overflow:hidden;"><span style="width:12px;height:12px;background:#3B4A3A;"></span><span style="width:12px;height:12px;background:#C9D2C4;"></span></span>
-            <span style="font:700 11px/1.3 'Lato';letter-spacing:.03em;text-transform:uppercase;">Darker = Agent Handled&nbsp;·&nbsp;Lighter = Automated</span>
-          </div>
-        </div>
-
-        <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px;display:flex;flex-direction:column;min-height:0;overflow-y:auto;">
-          <div style="font:700 15px/1 'Lato';letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:4px;">Cost Breakdown at Assumed Automation</div>
-          <div style="font:400 13px/1.3 'Lato';color:var(--muted);margin-bottom:12px;">Steady-state, no volume growth. Excludes Grupo NOA labor and Dialpad/PCI Pal platform costs.</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;align-items:center;gap:14px;"><div style="flex:1;font:700 14px/1.2 'Lato';color:var(--ink);">Gorgias Helpdesk <span style="font-weight:400;color:var(--muted);">— all tickets</span></div><div style="flex-shrink:0;font:700 16px/1 'Lato';">{{ floorHelpdeskLabel }}</div></div>
-            <div style="display:flex;align-items:center;gap:14px;"><div style="flex:1;font:700 14px/1.2 'Lato';color:var(--ink);">Gorgias AI Agent <span style="font-weight:400;color:var(--muted);">({{ floorAiTierLabel }}) — Email+Chat+SMS</span></div><div style="flex-shrink:0;font:700 16px/1 'Lato';">{{ floorAiAgentLabel }}</div></div>
-            <div style="display:flex;align-items:center;gap:14px;"><div style="flex:1;font:700 14px/1.2 'Lato';color:var(--ink);">Gorgias SMS <span style="font-weight:400;color:var(--muted);">— SMS only</span></div><div style="flex-shrink:0;font:700 16px/1 'Lato';">{{ floorSmsLabel }}</div></div>
-            <div style="display:flex;align-items:center;gap:14px;padding-top:6px;border-top:1px solid var(--line);"><div style="flex:1;font:700 14px/1.2 'Lato';color:#8C6A3F;">Gorgias Subtotal <span style="font-weight:400;color:var(--muted);">— annual, billed {{ floorGorgiasQuarterlyLabel }}/quarter</span></div><div style="flex-shrink:0;font:700 16px/1 'Lato';color:#8C6A3F;">{{ floorGorgiasLabel }}</div></div>
-            <div style="display:flex;align-items:center;gap:14px;"><div style="flex:1;font:700 14px/1.2 'Lato';color:var(--ink);">FlipCX <span style="font-weight:400;color:var(--muted);">— Phone, flat monthly ({{ floorFlipMonthlyLabel }}/mo)</span></div><div style="flex-shrink:0;font:700 16px/1 'Lato';">{{ floorFlipLabel }}</div></div>
-            <div style="display:flex;align-items:center;gap:14px;padding-top:6px;border-top:2px solid var(--ink);"><div style="flex:1;font:700 15px/1.2 'Lato';">Total Assumed Annual Spend</div><div style="flex-shrink:0;font:700 18px/1 'Playfair Display';color:var(--sage-deep);">{{ floorTotalSpendLabel }}</div></div>
-          </div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">
-            <div style="font:700 11px/1.2 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">$ per Automated Contact, by Channel</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;">
-              <div><div style="font:700 18px/1 'Playfair Display';color:#8A6A1F;">{{ floorEmailPerContactLabel }}</div><div style="font:700 10px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:3px;">Email</div><div style="font:400 9px/1.3 'Lato';color:var(--muted);margin-top:4px;">{{ floorEmailPerContactBreakdown }}</div></div>
-              <div><div style="font:700 18px/1 'Playfair Display';color:var(--ink-deep);">{{ floorChatPerContactLabel }}</div><div style="font:700 10px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:3px;">Chat</div><div style="font:400 9px/1.3 'Lato';color:var(--muted);margin-top:4px;">{{ floorChatPerContactBreakdown }}</div></div>
-              <div><div style="font:700 18px/1 'Playfair Display';color:#8A3C3A;">{{ floorSmsPerContactLabel }}</div><div style="font:700 10px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:3px;">SMS</div><div style="font:400 9px/1.3 'Lato';color:var(--muted);margin-top:4px;">{{ floorSmsPerContactBreakdown }}</div></div>
-              <div><div style="font:700 18px/1 'Playfair Display';color:var(--phone-deep);">{{ floorVoicePerContactLabel }}</div><div style="font:700 10px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:3px;">Phone</div><div style="font:400 9px/1.3 'Lato';color:var(--muted);margin-top:4px;">{{ floorVoicePerContactBreakdown }}</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style="text-align:center;font:400 12px/1.3 'Lato';color:var(--muted);">Baseline: trailing 12-month ticket run-rate (~{{ floorTicketRunRateLabel }}/yr, all channels) at today's channel mix. Figures are directional planning assumptions, not forecasts or commitments — this page is temporary and will be retired once the platform is mature.</div>
     </section>
 
   </div>
@@ -9847,6 +9672,49 @@ function renderReturns(force) {
       '<div style="height:9px;width:' + (b / maxS * 100).toFixed(1) + '%;background:' + TEAL + ';border-radius:3px;"></div></div>' +
       '<div style="font:600 13px/1 Lato;color:var(--ink);text-align:right;">' + (b * 100).toFixed(0) + '%' + (d == null ? '' : ' <span style="font-size:11px;color:' + MUTED + ';">(' + (d >= 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ')</span>') + '</div></div>'; }).join('');
 
+  // ---- long-run trend: physical returns per 100 orders by ORDER month (internal returns sheet), independent of the picker ----
+  const longRun = (() => {
+    const pr = (feed.returns && feed.returns.physical) || {};
+    const ls = feed.months.filter(m => m.month >= (pr.start_month || '2022-01') && m.values.returns_physical_per_100 != null);
+    if (ls.length < 6) return '';
+    const done = m => m.values.returns_physical_status === 'complete';
+    const flagged = m => !!m.values.returns_physical_note;
+    const W2 = 1000, H2 = 210, pl = 40, prr = 14, pt = 18, pb = 34;
+    const vals = ls.map(m => m.values.returns_physical_per_100), mx = Math.max(...vals) * 1.15;
+    const X2 = i => pl + i * ((W2 - pl - prr) / (ls.length - 1)), Y2 = v => pt + (1 - v / mx) * (H2 - pt - pb);
+    const pts = ls.map((m, i) => [X2(i), Y2(m.values.returns_physical_per_100)]);
+    const fo = ls.findIndex(m => !done(m));
+    const solid = (fo < 0 ? pts : pts.slice(0, fo)).map(p => p.map(n => n.toFixed(1)).join(',')).join(' ');
+    const dashed = fo < 0 ? '' : pts.slice(Math.max(0, fo - 1)).map(p => p.map(n => n.toFixed(1)).join(',')).join(' ');
+    let g = '<svg viewBox="0 0 ' + W2 + ' ' + H2 + '" style="width:100%;height:auto;display:block;overflow:visible;">';
+    [0, 1, 2, 3].filter(t => t < mx).forEach(t => { g += '<line x1="' + pl + '" x2="' + (W2 - prr) + '" y1="' + Y2(t) + '" y2="' + Y2(t) + '" stroke="#E1DACE" stroke-dasharray="' + (t ? '3 4' : '0') + '"></line><text x="' + (pl - 6) + '" y="' + (Y2(t) + 4) + '" text-anchor="end" style="font:400 11px Lato;fill:#7A756C;">' + t + '</text>'; });
+    ls.forEach((m, i) => { if (m.month.slice(5) === '01') g += '<line x1="' + X2(i) + '" x2="' + X2(i) + '" y1="' + pt + '" y2="' + (H2 - pb) + '" stroke="#EDE7DD"></line><text x="' + (X2(i) + 4) + '" y="' + (H2 - 14) + '" style="font:700 11px Lato;fill:#7A756C;">' + m.month.slice(0, 4) + '</text>'; });
+    const aMark = ls.findIndex(m => m.month === '2026-03');
+    if (aMark > 0) g += '<line x1="' + X2(aMark) + '" x2="' + X2(aMark) + '" y1="' + pt + '" y2="' + (H2 - pb) + '" stroke="' + TEAL + '" stroke-dasharray="2 3"></line><text x="' + (X2(aMark) - 4) + '" y="' + (pt + 10) + '" text-anchor="end" style="font:700 10px Lato;fill:' + TEAL + ';">AfterShip portal</text>';
+    g += '<polyline points="' + solid + '" fill="none" stroke="' + TEAL + '" stroke-width="2.2"></polyline>';
+    if (dashed) g += '<polyline points="' + dashed + '" fill="none" stroke="' + TEAL + '" stroke-width="2.2" stroke-dasharray="5 4"></polyline>';
+    ls.forEach((m, i) => { if (flagged(m) || !done(m)) g += '<circle cx="' + pts[i][0].toFixed(1) + '" cy="' + pts[i][1].toFixed(1) + '" r="3.5" fill="#fff" stroke="' + (flagged(m) ? '#B9852F' : TEAL) + '" stroke-width="2"></circle>'; });
+    g += '</svg>';
+    // yearly averages over complete months (sum returns / sum orders)
+    const yrs = {}; ls.filter(done).forEach(m => { const y = m.month.slice(0, 4); yrs[y] = yrs[y] || [0, 0, 0];
+      yrs[y][0] += m.values.returns_physical || 0; yrs[y][1] += m.values.company_orders_ex_amazon || 0; yrs[y][2]++; });
+    const strip = Object.keys(yrs).sort().map(y => '<div style="text-align:center;min-width:64px;"><div style="font:700 11px Lato;color:' + MUTED + ';">' + y + (yrs[y][2] < 12 ? ' <span style="font-weight:400;">(' + yrs[y][2] + ' mo)</span>' : '') + '</div><div style="font:600 20px/1.2 \'Playfair Display\';color:var(--ink);">' + (yrs[y][1] ? (yrs[y][0] / yrs[y][1] * 100).toFixed(2) : '\u2014') + '</div></div>').join('');
+    // year-over-year: latest complete month vs the same month a year earlier
+    const lc = ls.filter(done).pop(), ly = lc ? ls.find(m => m.month === (Number(lc.month.slice(0, 4)) - 1) + lc.month.slice(4)) : null;
+    let yoy = '';
+    if (lc && ly && done(ly)) { const a = lc.values.returns_physical_per_100, b = ly.values.returns_physical_per_100, ch = (a - b) / b;
+      yoy = pill((ch > 0 ? '\u25B2 ' : '\u25BC ') + Math.abs(Math.round(ch * 100)) + '% vs ' + lbl(ly.month), ch > 0 ? RED : GREEN, ch > 0 ? '#F6E4E1' : '#E8EFE6'); }
+    return '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-top:12px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">' +
+        '<div><div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">Long-run trend \u00b7 physical returns per 100 orders</div>' +
+        '<div style="font:400 12px/1.4 Lato;color:' + MUTED + ';margin-top:3px;">Orders whose products came back to the warehouse, by order month (internal returns sheet). Keep-the-product refunds are not included here.</div></div>' +
+        (lc ? '<div style="text-align:right;"><div style="font:400 12px Lato;color:' + MUTED + ';">' + lbl(lc.month) + ' (latest complete)</div><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;"><span style="font:600 26px/1.1 \'Playfair Display\';color:var(--ink);">' + lc.values.returns_physical_per_100.toFixed(2) + '</span>' + yoy + '</div></div>' : '') +
+      '</div>' + g +
+      '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;">' + strip + '</div>' +
+      '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:8px;">Yearly figures use complete months only. Dashed: order months still receiving returns (complete 120 days after month end). ' +
+      '<span style="color:#B9852F;font-weight:700;">\u25CB</span> Dec 2024\u2013Feb 2025: warehouse move; many rows uncoded, may include undeliverables.</div></div>';
+  })();
+
   // ---- priority products (selected period; rate and $) ----
   const pri = feed.returns.priority_products || [];
   const prodCards = pri.map(name => { const a = prodAgg(sel, name), b = prior.length ? prodAgg(prior, name) : null; if (!a) return '';
@@ -9859,10 +9727,10 @@ function renderReturns(force) {
   root.innerHTML =
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">' +
       '<div style="min-width:0;flex:1;"><h1 style="font:500 24px/1 \'Playfair Display\';margin:0;color:' + TEAL + ';">Returns</h1>' +
-      '<div style="font:400 13px/1.4 Lato;color:' + MUTED + ';margin-top:6px;">By the month the order was placed. Returns keep arriving for about 90 days after a month ends, so recent months are still filling in. Lower is better.</div>' + periodLine + '</div>' + picker + '</div>' +
+      '<div style="font:400 13px/1.4 Lato;color:' + MUTED + ';margin-top:6px;">By the month the order was placed, from ' + lbl(start) + ' orders (the first month fully captured by the AfterShip returns portal). Returns keep arriving for about 90 days after a month ends, so recent months are still filling in. Lower is better.</div>' + periodLine + '</div>' + picker + '</div>' +
     '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">' +
       card('Return rate', pct(A.rate), A.returns.toLocaleString() + ' returns', '<div>' + badge(A.rate, P && P.rate) + '</div>') +
-      card('Revenue returned', usd(A.usd), pct(A.usdPct) + ' of revenue' + (P ? ' \u00b7 ' + (prior.length === n ? usd(P.usd) + ' in ' + period(prior) : 'avg ' + usd(P.usd / prior.length) + '/mo in ' + period(prior)) : ''), '<div>' + badge(A.usdPct, P && P.usdPct) + '</div>') +
+      card('Revenue returned', usd(A.usd), pct(A.usdPct) + ' of revenue' + (P ? ' \u00b7 ' + (prior.length === n || prior.length === 1 ? usd(P.usd) + ' in ' + period(prior) : 'avg ' + usd(P.usd / prior.length) + '/mo in ' + period(prior)) : ''), '<div>' + badge(A.usdPct, P && P.usdPct) + '</div>') +
       card('Subscription-driven returns', subNow == null ? '\u2014' : (subNow * 100).toFixed(0) + '%', 'of returns with a reason', '<div>' + (subPrev == null ? '' : badge(subNow, subPrev, 'pts')) + '</div>') +
     '</div>' +
     '<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;margin-top:12px;">' +
@@ -9875,9 +9743,10 @@ function renderReturns(force) {
         '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';">Share of returns with a reason \u00b7 <b style="color:' + TEAL + ';">' + period(sel) + '</b>' + (prior.length ? ' vs <span style="color:#7FAAAD;font-weight:700;">' + period(prior) + '</span> (pts change)' : '') + '</div>' +
         reasonRows + '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';margin-top:auto;">A reason was recorded for ' + pct(RS.coverage, 0) + ' of these returns.</div></div>' +
     '</div>' +
+    longRun +
     (prodCards ? '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin:14px 0 8px;">Priority products \u00b7 ' + period(sel) + ' orders</div>' +
       '<div style="display:grid;grid-template-columns:repeat(' + pri.length + ',minmax(0,1fr));gap:12px;">' + prodCards + '</div>' : '') +
-    '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed in the period \u00f7 orders (excl. Amazon and Walmart); revenue returned = value of returned items; Power BI returns model. Periods are summed before dividing. Comparisons are with the months just before the selection (at least three, summed); they are marked "not final yet" while either period is still filling in. A return can carry more than one reason.</div>';
+    '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed in the period \u00f7 orders (excl. Amazon and Walmart); revenue returned = value of returned items; Power BI returns model (returns created through AfterShip). Earlier order months are excluded because returns handled before the portal launched (soft launch mid-February, full launch March 20, 2026) are not in the data. Periods are summed before dividing. Comparisons are with the months just before the selection (at least three, summed); they are marked "not final yet" while either period is still filling in. A return can carry more than one reason.</div>';
   root.dataset.key = key;
 }
 function retState_() {
@@ -10885,7 +10754,7 @@ class Component extends DCLogic {
 
   componentDidMount() {
     // A #exec-summary (or #contact-center, #revenue, #platform-cost, #cost-roi, #projection,
-    // #gorgias-floor) link opens straight into that section once unlocked, instead of landing on
+    // #returns) link opens straight into that section once unlocked, instead of landing on
     // the full dashboard and requiring a click. Wait for the initial fetch to finish first —
     // firing this in parallel with loadData() raced the exec summary's own data fetch and left
     // its cards permanently stuck on stale/empty state.
@@ -11015,7 +10884,7 @@ class Component extends DCLogic {
     if (hash) try { history.replaceState(null, '', '#' + hash); } catch (e) {}
   };
   // Section hashes a link can land on directly (checked on mount and kept in sync while scrolling).
-  static SECTION_HASHES = { 'contact-center': 'contact-center', revenue: 'revenue', returns: 'returns', platform: 'platform-cost', roi: 'cost-roi', projection: 'projection', floor: 'gorgias-floor' };
+  static SECTION_HASHES = { 'contact-center': 'contact-center', revenue: 'revenue', returns: 'returns', platform: 'platform-cost', roi: 'cost-roi', projection: 'projection' };
   goToInitialHash = () => {
     const hash = (location.hash || '').replace('#', '');
     if (!hash) return;
@@ -11026,35 +10895,25 @@ class Component extends DCLogic {
   };
   goToSectionFromHash = (hash) => {
     const refByHash = { 'contact-center': this.ccSectionRef, revenue: this.revSectionRef, 'platform-cost': this.platformSectionRef, 'cost-roi': this.roiSectionRef, projection: this.projSectionRef };
-    if (hash === 'gorgias-floor') { this.goToFloor(); return; }
     if (hash === 'returns') { this.goToReturns(); return; }
     const ref = refByHash[hash];
     if (ref) this.scrollToSection(ref)();
   };
   // The React ref on this section (added after the others) never attaches for reasons unclear
   // in this runtime, so it navigates by querying the DOM directly instead — same net effect.
-  // Same workaround as goToFloor: refs on sections added after the originals never attach in this runtime.
+  // Refs on sections added after the originals never attach in this runtime, so navigate via the DOM.
   goToReturns = () => {
     const c = this.containerRef.current;
     const el = document.querySelector('[data-screen-label="Returns"]');
     if (c && el) this.smoothScrollTo(c, el.offsetTop);
     try { history.replaceState(null, '', '#returns'); } catch (e) {}
   };
-  goToFloor = () => {
-    const c = this.containerRef.current;
-    const el = document.querySelector('[data-screen-label="Gorgias Results Floor"]');
-    if (c && el) this.smoothScrollTo(c, el.offsetTop);
-    try { history.replaceState(null, '', '#gorgias-floor'); } catch (e) {}
-  };
 
   handleScroll = () => {
     const c = this.containerRef.current, rev = this.revSectionRef.current, roi = this.roiSectionRef.current, platform = this.platformSectionRef.current, proj = this.projSectionRef.current, ret = document.querySelector('[data-screen-label="Returns"]');
-    const floorEl = document.querySelector('[data-screen-label="Gorgias Results Floor"]');
-    const floor = floorEl ? { offsetTop: floorEl.offsetTop } : null;
     if (!c || !rev || !roi || !platform || !proj) return;
     let next = 'contact-center';
-    if (floor && c.scrollTop >= floor.offsetTop - 200) next = 'floor';
-    else if (c.scrollTop >= proj.offsetTop - 200) next = 'projection';
+    if (c.scrollTop >= proj.offsetTop - 200) next = 'projection';
     else if (c.scrollTop >= roi.offsetTop - 200) next = 'roi';
     else if (c.scrollTop >= platform.offsetTop - 200) next = 'platform';
     else if (ret && c.scrollTop >= ret.offsetTop - 200) next = 'returns';
@@ -11068,7 +10927,7 @@ class Component extends DCLogic {
     // the edge, not throughout the whole section like scroll-snap-type caused).
     if (this._scrollNudgeT) clearTimeout(this._scrollNudgeT);
     this._scrollNudgeT = setTimeout(() => {
-      const tops = [0, rev.offsetTop, roi.offsetTop, platform.offsetTop, proj.offsetTop].concat(ret ? [ret.offsetTop] : [], floor ? [floor.offsetTop] : []);
+      const tops = [0, rev.offsetTop, roi.offsetTop, platform.offsetTop, proj.offsetTop].concat(ret ? [ret.offsetTop] : []);
       const y = c.scrollTop;
       let nearest = null, nearestDist = Infinity;
       for (const t of tops) { const d = Math.abs(t - y); if (d < nearestDist) { nearestDist = d; nearest = t; } }
@@ -11598,8 +11457,6 @@ class Component extends DCLogic {
       goToReturns: this.goToReturns,
       returnsNavBg: activeSection === 'returns' ? 'rgba(255,255,255,.08)' : 'transparent',
       goToProjection: this.scrollToSection(this.projSectionRef, 'projection'),
-      goToFloor: this.goToFloor,
-      floorNavBg: activeSection === 'floor' ? 'rgba(255,255,255,.08)' : 'transparent',
       ccNavBg: activeSection === 'contact-center' ? 'rgba(255,255,255,.08)' : 'transparent',
       revNavBg: activeSection === 'revenue' ? 'rgba(255,255,255,.08)' : 'transparent',
       projNavBg: activeSection === 'projection' ? 'rgba(255,255,255,.08)' : 'transparent',
