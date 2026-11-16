@@ -5471,8 +5471,12 @@ a:hover{color:var(--ink-deep);}
       <div sc-camel-on-click="{{ goToReturns }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;background:{{ returnsNavBg }};font:700 16px/1 'Lato';cursor:pointer;">
         <span style="width:8px;height:8px;border-radius:50%;background:#3E7A7E;flex-shrink:0;"></span>Returns
       </div>
-      <div sc-camel-on-click="{{ goToReturnsProducts }}" style="display:flex;align-items:center;gap:10px;padding:9px 14px 9px 30px;margin-top:-4px;border-radius:8px;background:{{ returnsProductsNavBg }};font:700 14px/1.1 'Lato';cursor:pointer;">
-        <span style="width:10px;height:1.5px;background:rgba(255,255,255,.4);flex-shrink:0;"></span>Product Details
+      <div style="display:flex;align-items:stretch;margin-top:-6px;">
+        <div style="width:24px;flex-shrink:0;position:relative;margin-left:17px;">
+          <div style="position:absolute;left:0;top:-4px;height:calc(50% + 4px);width:1.5px;background:rgba(255,255,255,.35);"></div>
+          <div style="position:absolute;left:0;top:50%;width:14px;height:1.5px;background:rgba(255,255,255,.35);"></div>
+        </div>
+        <div sc-camel-on-click="{{ goToReturnsProducts }}" style="flex:1;display:flex;align-items:center;padding:12px 14px 12px 4px;border-radius:8px;background:{{ returnsProductsNavBg }};font:700 16px/1 'Lato';cursor:pointer;">Product Details</div>
       </div>
       <div sc-camel-on-click="{{ goToPlatformCosts }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;background:{{ platformNavBg }};font:700 16px/1 'Lato';cursor:pointer;">
         <span style="width:8px;height:8px;border-radius:50%;background:#8C6A3F;flex-shrink:0;"></span>Platform Cost Detail
@@ -9876,23 +9880,34 @@ function renderReturns(force) {
       (open ? '<tr><td colspan="7" style="padding:10px 14px 14px;background:#F3F0EA;border-bottom:1px solid var(--line);">' + monthChart(name) + '</td></tr>' : '');
   }).join('');
   const th = t => '<th style="padding:6px 8px;font:700 11px Lato;letter-spacing:.04em;text-transform:uppercase;color:' + MUTED + ';border-bottom:1px solid var(--line);text-align:' + (t[1] || 'left') + ';">' + t[0] + '</th>';
-  const allTable = rows.length ? '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-top:12px;">' +
-    '<div onclick="retToggleTable()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">' +
-      '<span style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">All products (' + rows.length + ') ' + (S.table ? '\u25B4' : '\u25BE') +
-        ' <span style="font:400 12px Lato;text-transform:none;letter-spacing:0;color:' + MUTED + ';">\u00b7 the cards above show ' + picks.length + ' of ' + rows.length + '</span></span>' +
-      '<span style="font:400 12px Lato;color:' + MUTED + ';">' + (S.table ? 'Sorted by revenue returned \u00b7 click a product for its monthly trend' : 'Show every product') + '</span></div>' +
-    (S.table ? '<div style="overflow-x:auto;margin-top:6px;"><table style="width:100%;border-collapse:collapse;font:400 13px Lato;color:var(--ink);"><thead><tr>' +
-      [['Product'], ['Bottle return rate', 'right'], [prior.length ? 'vs ' + period(prior) : 'Change'], ['% of revenue', 'right'], ['$ returned', 'right'], ['Bottles returned', 'right'], ['Returns', 'right']].map(th).join('') +
-      '</tr></thead><tbody>' + tableRows + '</tbody></table>' +
-      '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font:400 11px Lato;color:' + MUTED + ';margin-top:8px;">' +
+  const thead = '<thead><tr>' + [['Product'], ['Bottle return rate', 'right'], [prior.length ? 'vs ' + period(prior) : 'Change'], ['% of revenue', 'right'], ['$ returned', 'right'], ['Bottles returned', 'right'], ['Returns', 'right']].map(th).join('') + '</tr></thead>';
+  const btn = (txt, solid) => '<button onclick="event.stopPropagation();retToggleTable()" style="cursor:pointer;border-radius:10px;padding:9px 18px;font:700 14px/1 Lato;letter-spacing:.02em;' +
+    (solid ? 'background:' + TEAL + ';color:#fff;border:2px solid ' + TEAL + ';box-shadow:0 4px 14px rgba(62,122,126,.25);' : 'background:var(--card);color:' + TEAL + ';border:2px solid ' + TEAL + ';') + '">' + txt + '</button>';
+  const legendRow = '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font:400 11px Lato;color:' + MUTED + ';margin-top:8px;">' +
         '<span>Shaded vs the all-product average for ' + period(sel) + ' (bottle return rate ' + pct(avgB) + ', % of revenue ' + pct(avgU) + '):</span>' +
         '<span style="background:#F0D5D1;color:#8E2F2F;font-weight:700;padding:2px 6px;border-radius:6px;">50%+ above</span>' +
         '<span style="background:#F6E4E1;color:#9C3B3B;font-weight:700;padding:2px 6px;border-radius:6px;">25%+ above</span>' +
         '<span style="background:#FAEFED;padding:2px 6px;border-radius:6px;">10%+ above</span>' +
         '<span style="background:#EEF3EC;padding:2px 6px;border-radius:6px;">10%+ below</span>' +
         '<span style="background:#E1EADF;color:#3F5E3E;padding:2px 6px;border-radius:6px;">25%+ below</span>' +
-        '<span>· Bar = $ returned vs the largest product · Grayed rows: fewer than ' + MIN_VOL + ' returns · Change in percentage points of the bottle return rate</span></div></div>' : '') +
-    '</div>' : '';
+        '<span>\u00b7 Bar = $ returned vs the largest product \u00b7 Grayed rows: fewer than ' + MIN_VOL + ' returns \u00b7 Change in percentage points of the bottle return rate</span></div>';
+  const headerBar = '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
+      '<div><div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">All products (' + rows.length + ')</div>' +
+      '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';margin-top:3px;">Every product, sorted by revenue returned \u00b7 the cards above show ' + picks.length + ' of ' + rows.length + (S.table ? ' \u00b7 click a product for its monthly trend' : '') + '</div></div>' +
+      (S.table ? btn('Hide table \u25B4', false) : '') + '</div>';
+  let allTable = '';
+  if (rows.length && S.table) {
+    allTable = '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:12px;">' + headerBar +
+      '<div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font:400 13px Lato;color:var(--ink);">' + thead + '<tbody>' + tableRows + '</tbody></table>' + legendRow + '</div></div>';
+  } else if (rows.length) {
+    // Collapsed: a fading peek at the first three rows with a clear button; clicking anywhere on it opens the table.
+    const peekRows = tableRows.split('</tr>').slice(0, 3).join('</tr>') + '</tr>';
+    allTable = '<div onclick="retToggleTable()" style="cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:12px;">' + headerBar +
+      '<div style="position:relative;margin-top:8px;max-height:150px;overflow:hidden;">' +
+        '<table style="width:100%;border-collapse:collapse;font:400 13px Lato;color:var(--ink);pointer-events:none;">' + thead + '<tbody>' + peekRows + '</tbody></table>' +
+        '<div style="position:absolute;left:0;right:0;bottom:0;height:110px;background:linear-gradient(to bottom, rgba(255,255,255,0), var(--card) 75%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;">' +
+          btn('Show all ' + rows.length + ' products \u25BE', true) + '</div></div></div>';
+  }
 
   root.innerHTML =
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">' +
@@ -9944,7 +9959,7 @@ function retToggleMonth(k) { const s = retState_(); if (s.mode !== 'custom') { s
   s.months = s.months.indexOf(k) >= 0 ? s.months.filter(x => x !== k) : s.months.concat(k); retSave_(); }
 function retSetChart(c) { retState_().chart = c; retSave_(); }
 function retToggleTable() { const s = retState_(); s.table = !s.table; if (!s.table) s.exp = null; renderReturns(true); }
-function retExpand(name) { const s = retState_(); s.exp = s.exp === name ? null : name; renderReturns(true); }
+function retExpand(name) { const s = retState_(); s.table = true; s.exp = s.exp === name ? null : name; renderReturns(true); }
 function retFocus(name) {
   const s = retState_(); s.table = true; s.exp = name; renderReturns(true);
   const sec = document.querySelector('[data-screen-label="Returns - Product Details"]'), row = sec && sec.querySelector('tr[data-p="' + String(name).replace(/"/g, '\\"') + '"]');
