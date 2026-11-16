@@ -9755,9 +9755,15 @@ function renderReturns(force) {
   if (pins.length) picks = pins.map(n => Object.assign({ tag: 'Pinned' }, rows.find(r => r.name === n)));
   else {
     picks = rows.slice(0, 3).map((r, i) => Object.assign({ tag: '#' + (i + 1) + ' by revenue returned' }, r));
-    const worst = rows.filter(r => r.a.returns >= MIN_VOL && r.a.bRate != null).sort((p, q) => q.a.bRate - p.a.bRate)[0];
-    if (worst && !picks.some(p => p.name === worst.name)) picks.push(Object.assign({ tag: 'Highest bottle return rate' }, worst));
-    else if (worst) picks.forEach(p => { if (p.name === worst.name) p.tag += ' \u00b7 highest bottle return rate'; });
+    const byRate = rows.filter(r => r.a.returns >= MIN_VOL && r.a.bRate != null).sort((p, q) => q.a.bRate - p.a.bRate);
+    const worst = byRate[0];
+    if (worst && !picks.some(p => p.name === worst.name)) picks.push(Object.assign({ tag: 'Highest bottle return rate', risk: true }, worst));
+    else if (worst) {
+      // The highest-rate product is already a top-3 card: keep four cards by adding the next-highest rate not shown.
+      picks.forEach(p => { if (p.name === worst.name) p.tag += ' \u00b7 highest bottle return rate'; });
+      const next = byRate.find(r => !picks.some(p => p.name === r.name));
+      if (next) picks.push(Object.assign({ tag: 'Next-highest bottle return rate', risk: true }, next));
+    }
   }
   const vals = (k) => [].concat(...picks.map(x => [x.a[k], x.b && x.b[k]])).filter(v => v != null);
   const bMax = niceCeil(Math.max(...vals('bRate'), 0) * 100) / 100, usdMax = niceCeil(Math.max(...vals('usd'), 0));
@@ -9784,9 +9790,9 @@ function renderReturns(force) {
     '<span style="font:700 12px/1.2 Lato;color:var(--ink);">' + label + ' <span style="font-weight:400;color:' + MUTED + ';">\u00b7 ' + sub + '</span></span>' +
     '<span style="font:600 22px/1 \'Playfair Display\';color:var(--ink);">' + value + '</span></div>';
   const small = t => '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';">' + t + '</div>';
-  const prodCards = picks.map(({ name, a, b, tag }) => '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:0;display:flex;flex-direction:column;gap:4px;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;"><span style="font:700 15px/1 Lato;color:var(--ink);">' + esc(name) + '</span>' +
-      '<span style="font:700 10px/1.2 Lato;letter-spacing:.04em;text-transform:uppercase;color:' + (tag.indexOf('Highest') === 0 ? RED : TEAL) + ';text-align:right;">' + esc(tag) + '</span></div>' +
+  const prodCards = picks.map(({ name, a, b, tag, risk }) => '<div data-p="' + esc(name) + '" onclick="retFocus(this.dataset.p)" title="Open ' + esc(name) + ' in the all-products table" style="cursor:pointer;background:var(--card);border:1px solid var(--line);border-top:3px solid ' + (risk || tag.indexOf('highest') >= 0 ? RED : TEAL) + ';border-radius:14px;padding:12px 16px;min-width:0;display:flex;flex-direction:column;gap:4px;">' +
+      '<div style="font:700 10px/1.3 Lato;letter-spacing:.04em;text-transform:uppercase;color:' + (risk || tag.indexOf('highest') >= 0 ? RED : TEAL) + ';min-height:26px;display:flex;align-items:flex-end;">' + esc(tag) + '</div>' +
+      '<div style="font:700 16px/1.2 Lato;color:var(--ink);margin-bottom:4px;">' + esc(name) + '</div>' +
       head('Bottle return rate', '% of bottles sold', pct(a.bRate)) +
       track(a.bRate, b && b.bRate, bMax, axPct, name + ' bottle return rate ' + pct(a.bRate) + (b ? ', previously ' + pct(b.bRate) : '')) +
       small((b && b.bRate != null ? period(prior) + ' ' + pct(b.bRate) + ' \u2192 ' + period(sel) + ' ' + pct(a.bRate) + ' \u00b7 ' + ptsTxt(a.bRate, b.bRate) + ' \u00b7 ' : '') +
@@ -9794,11 +9800,13 @@ function renderReturns(force) {
       '<div style="height:8px;"></div>' +
       head('Revenue returned', '$ value returned', usd(a.usd)) +
       track(a.usd, b && b.usd, usdMax, axUsd, name + ' revenue returned ' + usd(a.usd) + (b ? ', previously ' + usd(b.usd) : '')) +
-      small((b ? period(prior) + ' ' + usd(b.usd) + ' \u2192 ' + period(sel) + ' ' + usd(a.usd) + ' \u00b7 ' : '') + pct(a.usdPct) + ' of revenue') + '</div>').join('');
+      small((b ? period(prior) + ' ' + usd(b.usd) + ' \u2192 ' + period(sel) + ' ' + usd(a.usd) + ' \u00b7 ' : '') + pct(a.usdPct) + ' of revenue') +
+      '<div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--line);font:700 12px Lato;color:' + TEAL + ';">Monthly trend &amp; all products \u25B8</div></div>').join('');
   const prodLegend = picks.length ? '<div style="display:flex;gap:16px;flex-wrap:wrap;font:400 11px Lato;color:' + MUTED + ';margin-top:6px;">' +
     (prior.length ? '<span>\u25CB ' + period(prior) + ' (previous)</span><span>\u25CF ' + period(sel) + ' (current) \u2014 red = up, green = down</span>' : '') +
     '<span>Same scale on every card: bottle return rate 0\u2013' + axPct(bMax) + ', revenue ' + axUsd(0) + '\u2013' + axUsd(usdMax) + '</span>' +
-    '<span>' + (pins.length ? 'Products pinned in Settings' : 'Cards chosen automatically: top 3 by revenue returned + highest bottle return rate (' + MIN_VOL + '+ returns)') + '</span></div>' : '';
+    '<span>' + (pins.length ? 'Products pinned in Settings' : 'Cards chosen automatically: top 3 by revenue returned + highest bottle return rate (' + MIN_VOL + '+ returns)') + '</span>' +
+    '<span>Click a card for its monthly trend in the table below</span></div>' : '';
   // ---- all-products table (collapsed by default); click a row for its monthly bottle return rate ----
   const miniChart = (name, key, fmtV, fmtAx, title, sub) => {
     const ser = months.map(m => { const it = (pb[m.month] || []).find(x => x.key === name); return { m, v: it && it[key] != null ? it[key] : null }; });
@@ -9850,8 +9858,11 @@ function renderReturns(force) {
     const bar = '<div style="position:relative;height:22px;display:flex;align-items:center;justify-content:flex-end;">' +
       '<div style="position:absolute;left:0;top:3px;bottom:3px;width:' + ((a.usd || 0) / maxUsd * 100).toFixed(1) + '%;background:#CFE0E1;border-radius:3px;"></div>' +
       '<span style="position:relative;font-weight:700;color:var(--ink);">' + usd(a.usd) + '</span></div>';
+    const pk = picks.find(p => p.name === name), edge = pk ? ((pk.risk || pk.tag.indexOf('highest') >= 0) ? RED : TEAL) : 'transparent';
     return '<tr data-p="' + esc(name) + '" onclick="retExpand(this.dataset.p)" style="cursor:pointer;background:' + (open ? '#F3F0EA' : zebra) + ';' + (low ? 'opacity:.5;' : '') + '">' +
-      '<td style="' + cell + 'font:700 13px Lato;color:var(--ink);"><span style="color:' + TEAL + ';">' + (open ? '\u25BE' : '\u25B8') + '</span> ' + esc(name) + (low ? ' <span style="font:400 11px Lato;color:' + MUTED + ';">low volume</span>' : '') + '</td>' +
+      '<td style="' + cell + 'font:700 13px Lato;color:var(--ink);border-left:4px solid ' + edge + ';"><span style="color:' + TEAL + ';">' + (open ? '\u25BE' : '\u25B8') + '</span> ' + esc(name) +
+        (pk ? ' <span style="font:700 9px/1 Lato;letter-spacing:.04em;text-transform:uppercase;color:' + edge + ';border:1px solid ' + edge + ';border-radius:8px;padding:2px 5px;margin-left:4px;">' + esc(pk.tag.split(' \u00b7 ')[0]) + '</span>' : '') +
+        (low ? ' <span style="font:400 11px Lato;color:' + MUTED + ';">low volume</span>' : '') + '</td>' +
       '<td style="' + cell + 'text-align:right;">' + pill2(pct(a.bRate), tint(a.bRate, avgB)) + '</td><td style="' + cell + '">' + chg + '</td>' +
       '<td style="' + cell + 'text-align:right;">' + pill2(pct(a.usdPct), tint(a.usdPct, avgU)) + '</td>' +
       '<td style="' + cell + 'min-width:150px;">' + bar + '</td>' +
@@ -9861,7 +9872,8 @@ function renderReturns(force) {
   const th = t => '<th style="padding:6px 8px;font:700 11px Lato;letter-spacing:.04em;text-transform:uppercase;color:' + MUTED + ';border-bottom:1px solid var(--line);text-align:' + (t[1] || 'left') + ';">' + t[0] + '</th>';
   const allTable = rows.length ? '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-top:12px;">' +
     '<div onclick="retToggleTable()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">' +
-      '<span style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">All products (' + rows.length + ') ' + (S.table ? '\u25B4' : '\u25BE') + '</span>' +
+      '<span style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">All products (' + rows.length + ') ' + (S.table ? '\u25B4' : '\u25BE') +
+        ' <span style="font:400 12px Lato;text-transform:none;letter-spacing:0;color:' + MUTED + ';">\u00b7 the cards above show ' + picks.length + ' of ' + rows.length + '</span></span>' +
       '<span style="font:400 12px Lato;color:' + MUTED + ';">' + (S.table ? 'Sorted by revenue returned \u00b7 click a product for its monthly trend' : 'Show every product') + '</span></div>' +
     (S.table ? '<div style="overflow-x:auto;margin-top:6px;"><table style="width:100%;border-collapse:collapse;font:400 13px Lato;color:var(--ink);"><thead><tr>' +
       [['Product'], ['Bottle return rate', 'right'], [prior.length ? 'vs ' + period(prior) : 'Change'], ['% of revenue', 'right'], ['$ returned', 'right'], ['Bottles returned', 'right'], ['Returns', 'right']].map(th).join('') +
@@ -9915,7 +9927,12 @@ function retToggleMonth(k) { const s = retState_(); if (s.mode !== 'custom') { s
 function retSetChart(c) { retState_().chart = c; retSave_(); }
 function retToggleTable() { const s = retState_(); s.table = !s.table; if (!s.table) s.exp = null; renderReturns(true); }
 function retExpand(name) { const s = retState_(); s.exp = s.exp === name ? null : name; renderReturns(true); }
-window.retToggleTable = retToggleTable; window.retExpand = retExpand; window.retTogglePicker = retTogglePicker; window.retSetMode = retSetMode; window.retToggleMonth = retToggleMonth; window.retSetChart = retSetChart; window.renderReturns = renderReturns;
+function retFocus(name) {
+  const s = retState_(); s.table = true; s.exp = name; renderReturns(true);
+  const sec = document.querySelector('[data-screen-label="Returns"]'), row = sec && sec.querySelector('tr[data-p="' + String(name).replace(/"/g, '\\"') + '"]');
+  if (sec && row) { const top = row.getBoundingClientRect().top - sec.getBoundingClientRect().top + sec.scrollTop - 60; sec.scrollTo({ top: top, behavior: 'smooth' }); }
+}
+window.retFocus = retFocus; window.retToggleTable = retToggleTable; window.retExpand = retExpand; window.retTogglePicker = retTogglePicker; window.retSetMode = retSetMode; window.retToggleMonth = retToggleMonth; window.retSetChart = retSetChart; window.renderReturns = renderReturns;
 
 // Contact Handling Split: a label stays inside its bar segment only if it fits the segment's actual width;
 // otherwise it moves to the column right of the bar, in the segment's color. Measured, so labels are never
