@@ -9596,9 +9596,13 @@ function renderReturns(force) {
     ms.forEach(m => (rb[m.month] || []).forEach(it => { if (it.key === '(not recorded)') { nr += it.returns; return; } a[it.label] = (a[it.label] || 0) + it.returns; tot += it.returns; }));
     const sh = {}; Object.keys(a).forEach(k => { sh[k] = tot ? a[k] / tot : 0; }); return { shares: sh, coverage: (tot + nr) ? tot / (tot + nr) : null }; };
   const pb = {}; ((feed.breakdowns || {}).returns_products || []).forEach(r => { pb[r.month] = r.items; });
-  const prodAgg = (ms, name) => { let ret = 0, ord = 0, rr = 0, any = false;
-    ms.forEach(m => { const it = (pb[m.month] || []).find(x => x.key === name); if (!it) return; any = true; ret += it.returns || 0; if (it.rate_orders) ord += (it.returns || 0) / it.rate_orders; rr += it.returned_revenue || 0; });
-    return any ? { rate: ord ? ret / ord : null, usd: rr } : null; };
+  const prodAgg = (ms, name) => { let ret = 0, ord = 0, bot = 0, sold = 0, rr = 0, rev = 0, any = false;
+    ms.forEach(m => { const it = (pb[m.month] || []).find(x => x.key === name); if (!it) return; any = true;
+      const r = it.returns || 0, b = it.bottles_returned || 0, u = it.returned_revenue || 0;
+      ret += r; if (it.rate_orders) ord += r / it.rate_orders; bot += b; if (it.rate_bottles) sold += b / it.rate_bottles;
+      rr += u; if (it.rate_revenue) rev += u / it.rate_revenue; });
+    return any ? { returns: ret, rate: ord ? ret / ord : null, bRate: sold ? bot / sold : null, bottles: bot, usd: rr, usdPct: rev ? rr / rev : null } : null; };
+  const allProducts = Array.from(new Set([].concat(...months.map(m => (pb[m.month] || []).map(x => x.key)))));
   const A = agg(sel), P = prior.length ? agg(prior) : null;
   const RS = reasonAgg(sel), RP = prior.length ? reasonAgg(prior) : null;
 
@@ -9738,19 +9742,30 @@ function renderReturns(force) {
 
   // ---- priority products (selected period; rate and $) ----
   const pri = feed.returns.priority_products || [];
-  // ---- priority products: was -> now tracks on a SHARED zero-based scale per metric across products ----
-  // Dot position = the value (comparable across cards); segment length = the change in the metric's own units;
-  // label = relative change. Scale max = largest value shown (either period, any product), rounded up to a clean number.
+  // ---- products: cards (auto-selected) on SHARED zero-based scales + an expandable all-products table ----
+  // Cards: top 3 by revenue returned + the worst bottle return rate among products with 30+ returns (pins in Settings
+  // override). Dot = value, segment = change in the metric's units, label = relative change.
+  const MIN_VOL = 30;
   const niceCeil = v => { if (!(v > 0)) return 1; const mag = Math.pow(10, Math.floor(Math.log10(v)));
     for (const k of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (k * mag >= v * 1.02) return k * mag; return 10 * mag; };
-  const pAgg = pri.map(name => ({ name, a: prodAgg(sel, name), b: prior.length ? prodAgg(prior, name) : null })).filter(x => x.a);
-  const allRates = [].concat(...pAgg.map(x => [x.a.rate, x.b && x.b.rate])).filter(v => v != null);
-  const allUsd = [].concat(...pAgg.map(x => [x.a.usd, x.b && x.b.usd])).filter(v => v != null);
-  const rateMax = niceCeil(Math.max(...allRates, 0) * 100) / 100, usdMax = niceCeil(Math.max(...allUsd, 0));
+  const rows = allProducts.map(name => ({ name, a: prodAgg(sel, name), b: prior.length ? prodAgg(prior, name) : null }))
+    .filter(x => x.a).sort((p, q) => (q.a.usd || 0) - (p.a.usd || 0));
+  const pins = (feed.returns.priority_products || []).filter(n => rows.some(r => r.name === n));
+  let picks;
+  if (pins.length) picks = pins.map(n => Object.assign({ tag: 'Pinned' }, rows.find(r => r.name === n)));
+  else {
+    picks = rows.slice(0, 3).map((r, i) => Object.assign({ tag: '#' + (i + 1) + ' by revenue returned' }, r));
+    const worst = rows.filter(r => r.a.returns >= MIN_VOL && r.a.bRate != null).sort((p, q) => q.a.bRate - p.a.bRate)[0];
+    if (worst && !picks.some(p => p.name === worst.name)) picks.push(Object.assign({ tag: 'Highest bottle return rate' }, worst));
+    else if (worst) picks.forEach(p => { if (p.name === worst.name) p.tag += ' \u00b7 highest bottle return rate'; });
+  }
+  const vals = (k) => [].concat(...picks.map(x => [x.a[k], x.b && x.b[k]])).filter(v => v != null);
+  const bMax = niceCeil(Math.max(...vals('bRate'), 0) * 100) / 100, usdMax = niceCeil(Math.max(...vals('usd'), 0));
   const track = (now, base, max, fmtAxis, title) => {
     const W3 = 300, x = v => 8 + Math.min(1, Math.max(0, v / max)) * (W3 - 16);
     let t = '<svg viewBox="0 0 ' + W3 + ' 40" style="width:100%;height:auto;display:block;" role="img"><title>' + esc(title) + '</title>' +
       '<line x1="8" y1="20" x2="' + (W3 - 8) + '" y2="20" stroke="#DDD6CA" stroke-width="5" stroke-linecap="round"></line>';
+    if (now == null) return t + '</svg>';
     if (base != null && prior.length) {
       const rel = base ? (now - base) / base : 0, flat = Math.abs(rel) < 0.02;
       const col = !finalCmp || flat ? '#8E887C' : (now > base ? RED : '#5F7D5E');
@@ -9759,34 +9774,75 @@ function renderReturns(force) {
         '<circle cx="' + x(now).toFixed(1) + '" cy="20" r="6.5" fill="' + col + '"></circle>' +
         '<text x="' + ((x(base) + x(now)) / 2).toFixed(1) + '" y="9" text-anchor="middle" style="font:700 12px Lato;fill:' + col + ';">' +
           (!finalCmp ? 'not final' : (flat ? 'flat' : (rel > 0 ? '+' : '\u2212') + Math.abs(Math.round(rel * 100)) + '%')) + '</text>';
-    } else {
-      t += '<circle cx="' + x(now).toFixed(1) + '" cy="20" r="6.5" fill="' + TEAL + '"></circle>';
-    }
-    t += '<text x="8" y="39" style="font:400 10px Lato;fill:#7A756C;">' + fmtAxis(0) + '</text>' +
-         '<text x="' + (W3 - 8) + '" y="39" text-anchor="end" style="font:400 10px Lato;fill:#7A756C;">' + fmtAxis(max) + '</text></svg>';
-    return t;
+    } else t += '<circle cx="' + x(now).toFixed(1) + '" cy="20" r="6.5" fill="' + TEAL + '"></circle>';
+    return t + '<text x="8" y="39" style="font:400 10px Lato;fill:#7A756C;">' + fmtAxis(0) + '</text>' +
+      '<text x="' + (W3 - 8) + '" y="39" text-anchor="end" style="font:400 10px Lato;fill:#7A756C;">' + fmtAxis(max) + '</text></svg>';
   };
   const axPct = v => (v * 100).toFixed(v * 100 % 1 ? 1 : 0) + '%', axUsd = v => v >= 1000 ? '$' + (v / 1000) + 'K' : '$' + v;
-  const prodCards = pAgg.map(({ name, a, b }) => {
-    const cmpLine = (fmt, now, base, unitDelta) => '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';">' +
-      (b ? period(prior) + ' ' + fmt(base) + ' \u2192 ' + period(sel) + ' ' + fmt(now) + ' \u00b7 ' + unitDelta : period(sel)) + '</div>';
-    const ptsD = (b && a.rate != null && b.rate != null) ? (a.rate >= b.rate ? '+' : '\u2212') + (Math.abs(a.rate - b.rate) * 100).toFixed(2) + ' pts' : '';
-    const usdD = b ? (a.usd >= b.usd ? '+' : '\u2212') + usd(Math.abs(a.usd - b.usd)) : '';
-    const head = (label, sub, value) => '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">' +
-      '<span style="font:700 12px/1.2 Lato;color:var(--ink);">' + label + ' <span style="font-weight:400;color:' + MUTED + ';">\u00b7 ' + sub + '</span></span>' +
-      '<span style="font:600 22px/1 \'Playfair Display\';color:var(--ink);">' + value + '</span></div>';
-    return '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:0;display:flex;flex-direction:column;gap:4px;">' +
-      '<div style="font:700 15px/1 Lato;color:var(--ink);margin-bottom:4px;">' + esc(name) + '</div>' +
-      head('Return rate', '% of orders returned', pct(a.rate)) +
-      track(a.rate, b && b.rate, rateMax, axPct, name + ' return rate ' + pct(a.rate) + (b ? ', previously ' + pct(b.rate) : '')) +
-      cmpLine(v => pct(v), a.rate, b && b.rate, ptsD) +
+  const ptsTxt = (n, b) => (n >= b ? '+' : '\u2212') + (Math.abs(n - b) * 100).toFixed(2) + ' pts';
+  const head = (label, sub, value) => '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">' +
+    '<span style="font:700 12px/1.2 Lato;color:var(--ink);">' + label + ' <span style="font-weight:400;color:' + MUTED + ';">\u00b7 ' + sub + '</span></span>' +
+    '<span style="font:600 22px/1 \'Playfair Display\';color:var(--ink);">' + value + '</span></div>';
+  const small = t => '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';">' + t + '</div>';
+  const prodCards = picks.map(({ name, a, b, tag }) => '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:0;display:flex;flex-direction:column;gap:4px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;"><span style="font:700 15px/1 Lato;color:var(--ink);">' + esc(name) + '</span>' +
+      '<span style="font:700 10px/1.2 Lato;letter-spacing:.04em;text-transform:uppercase;color:' + (tag.indexOf('Highest') === 0 ? RED : TEAL) + ';text-align:right;">' + esc(tag) + '</span></div>' +
+      head('Bottle return rate', '% of bottles sold', pct(a.bRate)) +
+      track(a.bRate, b && b.bRate, bMax, axPct, name + ' bottle return rate ' + pct(a.bRate) + (b ? ', previously ' + pct(b.bRate) : '')) +
+      small((b && b.bRate != null ? period(prior) + ' ' + pct(b.bRate) + ' \u2192 ' + period(sel) + ' ' + pct(a.bRate) + ' \u00b7 ' + ptsTxt(a.bRate, b.bRate) + ' \u00b7 ' : '') +
+            a.bottles.toLocaleString() + ' bottles \u00b7 ' + pct(a.rate) + ' of orders') +
       '<div style="height:8px;"></div>' +
-      head('Revenue returned', '$ value of returned items', usd(a.usd)) +
+      head('Revenue returned', '$ value returned', usd(a.usd)) +
       track(a.usd, b && b.usd, usdMax, axUsd, name + ' revenue returned ' + usd(a.usd) + (b ? ', previously ' + usd(b.usd) : '')) +
-      cmpLine(usd, a.usd, b && b.usd, usdD) + '</div>'; }).join('');
-  const prodLegend = pAgg.length && prior.length ? '<div style="display:flex;gap:16px;flex-wrap:wrap;font:400 11px Lato;color:' + MUTED + ';margin-top:6px;">' +
-    '<span>\u25CB ' + period(prior) + ' (previous)</span><span>\u25CF ' + period(sel) + ' (current) \u2014 red = up, green = down</span>' +
-    '<span>Same scale on every card: return rate 0\u2013' + axPct(rateMax) + ', revenue ' + axUsd(0) + '\u2013' + axUsd(usdMax) + '</span></div>' : '';
+      small((b ? period(prior) + ' ' + usd(b.usd) + ' \u2192 ' + period(sel) + ' ' + usd(a.usd) + ' \u00b7 ' : '') + pct(a.usdPct) + ' of revenue') + '</div>').join('');
+  const prodLegend = picks.length ? '<div style="display:flex;gap:16px;flex-wrap:wrap;font:400 11px Lato;color:' + MUTED + ';margin-top:6px;">' +
+    (prior.length ? '<span>\u25CB ' + period(prior) + ' (previous)</span><span>\u25CF ' + period(sel) + ' (current) \u2014 red = up, green = down</span>' : '') +
+    '<span>Same scale on every card: bottle return rate 0\u2013' + axPct(bMax) + ', revenue ' + axUsd(0) + '\u2013' + axUsd(usdMax) + '</span>' +
+    '<span>' + (pins.length ? 'Products pinned in Settings' : 'Cards chosen automatically: top 3 by revenue returned + highest bottle return rate (' + MIN_VOL + '+ returns)') + '</span></div>' : '';
+  // ---- all-products table (collapsed by default); click a row for its monthly bottle return rate ----
+  const monthChart = name => {
+    const ser = months.map(m => { const it = (pb[m.month] || []).find(x => x.key === name); return { m, v: it && it.rate_bottles != null ? it.rate_bottles : null }; });
+    const pts2 = ser.filter(o => o.v != null); if (pts2.length < 2) return '<div style="font:400 12px Lato;color:' + MUTED + ';padding:6px 0;">Not enough months to chart.</div>';
+    const W4 = 640, H4 = 170, l = 44, r = 20, tp = 26, bt = 30, mx = niceCeil(Math.max(...pts2.map(o => o.v)) * 100) / 100;
+    const X4 = i => l + (i + 0.5) * ((W4 - l - r) / ser.length), Y4 = v => tp + (1 - v / mx) * (H4 - tp - bt);
+    let g4 = '<svg viewBox="0 0 ' + W4 + ' ' + H4 + '" style="width:100%;max-width:720px;height:auto;display:block;" role="img"><title>' + esc(name) + ' bottle return rate by order month</title>';
+    [0, mx / 2, mx].forEach(t => { g4 += '<line x1="' + l + '" x2="' + (W4 - r) + '" y1="' + Y4(t) + '" y2="' + Y4(t) + '" stroke="#E1DACE"' + (t ? ' stroke-dasharray="3 4"' : '') + '></line><text x="' + (l - 6) + '" y="' + (Y4(t) + 4) + '" text-anchor="end" style="font:400 11px Lato;fill:#7A756C;">' + axPct(t) + '</text>'; });
+    const fo = ser.findIndex(o => !isMature(o.m));
+    if (fo >= 0) g4 += '<rect x="' + (X4(fo) - (W4 - l - r) / ser.length / 2) + '" y="' + tp + '" width="' + (W4 - r - X4(fo) + (W4 - l - r) / ser.length / 2) + '" height="' + (H4 - tp - bt) + '" fill="#F3F0EA"></rect><text x="' + (W4 - r - 4) + '" y="' + (tp + 12) + '" text-anchor="end" style="font:700 10px Lato;fill:#7A756C;">STILL FILLING IN</text>';
+    const P4 = ser.map((o, i) => o.v == null ? null : [X4(i), Y4(o.v)]);
+    const sol = P4.slice(0, fo < 0 ? P4.length : fo).filter(Boolean), das = fo < 0 ? [] : P4.slice(Math.max(0, fo - 1)).filter(Boolean);
+    if (sol.length > 1) g4 += '<polyline points="' + sol.map(q => q.join(',')).join(' ') + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5"></polyline>';
+    if (das.length > 1) g4 += '<polyline points="' + das.map(q => q.join(',')).join(' ') + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5" stroke-dasharray="6 5"></polyline>';
+    ser.forEach((o, i) => { const open = !isMature(o.m);
+      if (o.v != null) g4 += '<circle cx="' + X4(i) + '" cy="' + Y4(o.v) + '" r="4" fill="' + (open ? '#fff' : TEAL) + '" stroke="' + TEAL + '" stroke-width="2"></circle><text x="' + X4(i) + '" y="' + (Y4(o.v) - 9) + '" text-anchor="middle" style="font:600 11px Lato;fill:' + (open ? '#7A756C' : 'var(--ink)') + ';">' + pct(o.v) + '</text>';
+      g4 += '<text x="' + X4(i) + '" y="' + (H4 - 10) + '" text-anchor="middle" style="font:400 11px Lato;fill:#7A756C;">' + short(o.m.month) + '</text>'; });
+    return g4 + '</svg><div style="font:400 11px Lato;color:' + MUTED + ';">Bottle return rate by order month; months still filling in are dashed and typically rise.</div>';
+  };
+  const cell = 'padding:7px 8px;border-bottom:1px solid var(--line);';
+  const tableRows = rows.map(({ name, a, b }) => {
+    const low = a.returns < MIN_VOL, open = S.exp === name;
+    let chg = '<span style="color:' + MUTED + ';">\u2014</span>';
+    if (b && b.bRate != null && a.bRate != null) {
+      if (!finalCmp) chg = '<span style="color:' + MUTED + ';">not final</span>';
+      else { const up = a.bRate > b.bRate, flat = Math.abs((a.bRate - b.bRate) / b.bRate) < 0.02;
+        chg = '<span style="display:inline-block;font:700 12px/1 Lato;border-radius:10px;padding:4px 8px;color:' + (flat ? MUTED : (up ? RED : GREEN)) + ';background:' + (flat ? '#F0EDE7' : (up ? '#F6E4E1' : '#E8EFE6')) + ';">' + (flat ? '\u25B6 flat' : (up ? '\u25B2 ' : '\u25BC ') + ptsTxt(a.bRate, b.bRate)) + '</span>'; } }
+    return '<tr data-p="' + esc(name) + '" onclick="retExpand(this.dataset.p)" style="cursor:pointer;' + (low ? 'opacity:.5;' : '') + (open ? 'background:#F7F5F0;' : '') + '">' +
+      '<td style="' + cell + 'font:700 13px Lato;color:var(--ink);">' + (open ? '\u25BE ' : '\u25B8 ') + esc(name) + (low ? ' <span style="font:400 11px Lato;color:' + MUTED + ';">low volume</span>' : '') + '</td>' +
+      '<td style="' + cell + 'text-align:right;font:600 13px Lato;">' + pct(a.bRate) + '</td><td style="' + cell + '">' + chg + '</td>' +
+      '<td style="' + cell + 'text-align:right;">' + pct(a.usdPct) + '</td><td style="' + cell + 'text-align:right;">' + usd(a.usd) + '</td>' +
+      '<td style="' + cell + 'text-align:right;">' + a.bottles.toLocaleString() + '</td><td style="' + cell + 'text-align:right;">' + a.returns.toLocaleString() + '</td></tr>' +
+      (open ? '<tr><td colspan="7" style="padding:6px 12px 14px;background:#F7F5F0;border-bottom:1px solid var(--line);">' + monthChart(name) + '</td></tr>' : '');
+  }).join('');
+  const th = t => '<th style="padding:6px 8px;font:700 11px Lato;letter-spacing:.04em;text-transform:uppercase;color:' + MUTED + ';border-bottom:1px solid var(--line);text-align:' + (t[1] || 'left') + ';">' + t[0] + '</th>';
+  const allTable = rows.length ? '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-top:12px;">' +
+    '<div onclick="retToggleTable()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">' +
+      '<span style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';">All products (' + rows.length + ') ' + (S.table ? '\u25B4' : '\u25BE') + '</span>' +
+      '<span style="font:400 12px Lato;color:' + MUTED + ';">' + (S.table ? 'Sorted by revenue returned \u00b7 click a product for its monthly trend' : 'Show every product') + '</span></div>' +
+    (S.table ? '<div style="overflow-x:auto;margin-top:6px;"><table style="width:100%;border-collapse:collapse;font:400 13px Lato;color:var(--ink);"><thead><tr>' +
+      [['Product'], ['Bottle return rate', 'right'], [prior.length ? 'vs ' + period(prior) : 'Change'], ['% of revenue', 'right'], ['$ returned', 'right'], ['Bottles returned', 'right'], ['Returns', 'right']].map(th).join('') +
+      '</tr></thead><tbody>' + tableRows + '</tbody></table>' +
+      '<div style="font:400 11px Lato;color:' + MUTED + ';margin-top:6px;">Grayed: fewer than ' + MIN_VOL + ' returns in the period (too few to judge). Change is in percentage points of the bottle return rate.</div></div>' : '') +
+    '</div>' : '';
 
   root.innerHTML =
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px;">' +
@@ -9810,8 +9866,8 @@ function renderReturns(force) {
         reasonRows + '<div style="font:400 12px/1.3 Lato;color:' + MUTED + ';margin-top:auto;">A reason was recorded for ' + pct(RS.coverage, 0) + ' of these returns.</div></div>' +
     '</div>' +
     longRun +
-    (prodCards ? '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin:14px 0 8px;">Priority products \u00b7 ' + period(sel) + ' orders</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(' + pAgg.length + ',minmax(0,1fr));gap:12px;">' + prodCards + '</div>' + prodLegend : '') +
+    (prodCards ? '<div style="font:700 13px/1.2 Lato;letter-spacing:.05em;text-transform:uppercase;color:' + TEAL + ';margin:14px 0 8px;">Products \u00b7 ' + period(sel) + ' orders</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(' + picks.length + ',minmax(0,1fr));gap:12px;">' + prodCards + '</div>' + prodLegend : '') + allTable +
     '<div style="font:400 11px/1.4 Lato;color:' + MUTED + ';margin-top:10px;">Return rate = returns on orders placed in the period \u00f7 orders (excl. Amazon and Walmart); revenue returned = value of returned items; Power BI returns model (returns created through AfterShip). Earlier order months are excluded because returns handled before the portal launched (soft launch mid-February, full launch March 20, 2026) are not in the data. Periods are summed before dividing. Comparisons are with the same number of months immediately before the selection; they are marked "not final yet" while either period is still filling in. A return can carry more than one reason.</div>';
   root.dataset.key = key;
 }
@@ -9819,13 +9875,15 @@ function retState_() {
   if (!window.__RET_SEL) { let s = null; try { s = JSON.parse(localStorage.getItem('cx_returns_sel_v2') || 'null'); } catch (e) {} window.__RET_SEL = Object.assign({ mode: 'last3', months: [], chart: 'pct', open: false }, s || {}, { open: false }); }
   return window.__RET_SEL;
 }
-function retSave_() { try { const s = Object.assign({}, window.__RET_SEL); delete s.open; localStorage.setItem('cx_returns_sel_v2', JSON.stringify(s)); } catch (e) {} renderReturns(true); }
+function retSave_() { try { const s = Object.assign({}, window.__RET_SEL); delete s.open; delete s.table; delete s.exp; localStorage.setItem('cx_returns_sel_v2', JSON.stringify(s)); } catch (e) {} renderReturns(true); }
 function retTogglePicker() { retState_().open = !retState_().open; renderReturns(true); }
 function retSetMode(m) { const s = retState_(); s.mode = m; s.months = []; s.open = false; retSave_(); }
 function retToggleMonth(k) { const s = retState_(); if (s.mode !== 'custom') { s.mode = 'custom'; s.months = []; }
   s.months = s.months.indexOf(k) >= 0 ? s.months.filter(x => x !== k) : s.months.concat(k); retSave_(); }
 function retSetChart(c) { retState_().chart = c; retSave_(); }
-window.retTogglePicker = retTogglePicker; window.retSetMode = retSetMode; window.retToggleMonth = retToggleMonth; window.retSetChart = retSetChart; window.renderReturns = renderReturns;
+function retToggleTable() { const s = retState_(); s.table = !s.table; if (!s.table) s.exp = null; renderReturns(true); }
+function retExpand(name) { const s = retState_(); s.exp = s.exp === name ? null : name; renderReturns(true); }
+window.retToggleTable = retToggleTable; window.retExpand = retExpand; window.retTogglePicker = retTogglePicker; window.retSetMode = retSetMode; window.retToggleMonth = retToggleMonth; window.retSetChart = retSetChart; window.renderReturns = renderReturns;
 
 // Contact Handling Split: a label stays inside its bar segment only if it fits the segment's actual width;
 // otherwise it moves to the column right of the bar, in the segment's color. Measured, so labels are never
