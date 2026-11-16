@@ -9800,38 +9800,63 @@ function renderReturns(force) {
     '<span>Same scale on every card: bottle return rate 0\u2013' + axPct(bMax) + ', revenue ' + axUsd(0) + '\u2013' + axUsd(usdMax) + '</span>' +
     '<span>' + (pins.length ? 'Products pinned in Settings' : 'Cards chosen automatically: top 3 by revenue returned + highest bottle return rate (' + MIN_VOL + '+ returns)') + '</span></div>' : '';
   // ---- all-products table (collapsed by default); click a row for its monthly bottle return rate ----
-  const monthChart = name => {
-    const ser = months.map(m => { const it = (pb[m.month] || []).find(x => x.key === name); return { m, v: it && it.rate_bottles != null ? it.rate_bottles : null }; });
-    const pts2 = ser.filter(o => o.v != null); if (pts2.length < 2) return '<div style="font:400 12px Lato;color:' + MUTED + ';padding:6px 0;">Not enough months to chart.</div>';
-    const W4 = 640, H4 = 170, l = 44, r = 20, tp = 26, bt = 30, mx = niceCeil(Math.max(...pts2.map(o => o.v)) * 100) / 100;
-    const X4 = i => l + (i + 0.5) * ((W4 - l - r) / ser.length), Y4 = v => tp + (1 - v / mx) * (H4 - tp - bt);
-    let g4 = '<svg viewBox="0 0 ' + W4 + ' ' + H4 + '" style="width:100%;max-width:720px;height:auto;display:block;" role="img"><title>' + esc(name) + ' bottle return rate by order month</title>';
-    [0, mx / 2, mx].forEach(t => { g4 += '<line x1="' + l + '" x2="' + (W4 - r) + '" y1="' + Y4(t) + '" y2="' + Y4(t) + '" stroke="#E1DACE"' + (t ? ' stroke-dasharray="3 4"' : '') + '></line><text x="' + (l - 6) + '" y="' + (Y4(t) + 4) + '" text-anchor="end" style="font:400 11px Lato;fill:#7A756C;">' + axPct(t) + '</text>'; });
+  const miniChart = (name, key, fmtV, fmtAx, title, sub) => {
+    const ser = months.map(m => { const it = (pb[m.month] || []).find(x => x.key === name); return { m, v: it && it[key] != null ? it[key] : null }; });
+    const pts2 = ser.filter(o => o.v != null);
+    const headHtml = '<div style="font:700 12px/1.2 Lato;color:' + TEAL + ';letter-spacing:.04em;text-transform:uppercase;">' + title +
+      ' <span style="font-weight:400;text-transform:none;letter-spacing:0;color:' + MUTED + ';">\u00b7 ' + sub + '</span></div>';
+    if (pts2.length < 2) return headHtml + '<div style="font:400 12px Lato;color:' + MUTED + ';padding:6px 0;">Not enough months to chart.</div>';
+    const W4 = 520, H4 = 170, l = 46, r = 14, tp = 24, bt = 28, mx = niceCeil(Math.max(...pts2.map(o => o.v)));
+    const X4 = i => l + (i + 0.5) * ((W4 - l - r) / ser.length), Y4 = v => tp + (1 - v / mx) * (H4 - tp - bt), step = (W4 - l - r) / ser.length;
+    let g4 = '<svg viewBox="0 0 ' + W4 + ' ' + H4 + '" style="width:100%;height:auto;display:block;" role="img"><title>' + esc(name + ' ' + title + ' by order month') + '</title>';
     const fo = ser.findIndex(o => !isMature(o.m));
-    if (fo >= 0) g4 += '<rect x="' + (X4(fo) - (W4 - l - r) / ser.length / 2) + '" y="' + tp + '" width="' + (W4 - r - X4(fo) + (W4 - l - r) / ser.length / 2) + '" height="' + (H4 - tp - bt) + '" fill="#F3F0EA"></rect><text x="' + (W4 - r - 4) + '" y="' + (tp + 12) + '" text-anchor="end" style="font:700 10px Lato;fill:#7A756C;">STILL FILLING IN</text>';
+    if (fo >= 0) g4 += '<rect x="' + (X4(fo) - step / 2) + '" y="' + tp + '" width="' + (W4 - r - X4(fo) + step / 2) + '" height="' + (H4 - tp - bt) + '" fill="#F3F0EA"></rect><text x="' + (W4 - r - 4) + '" y="' + (tp + 12) + '" text-anchor="end" style="font:700 10px Lato;fill:#7A756C;">STILL FILLING IN</text>';
+    [0, mx / 2, mx].forEach(t => { g4 += '<line x1="' + l + '" x2="' + (W4 - r) + '" y1="' + Y4(t) + '" y2="' + Y4(t) + '" stroke="#E1DACE"' + (t ? ' stroke-dasharray="3 4"' : '') + '></line><text x="' + (l - 6) + '" y="' + (Y4(t) + 4) + '" text-anchor="end" style="font:400 11px Lato;fill:#7A756C;">' + fmtAx(t) + '</text>'; });
     const P4 = ser.map((o, i) => o.v == null ? null : [X4(i), Y4(o.v)]);
     const sol = P4.slice(0, fo < 0 ? P4.length : fo).filter(Boolean), das = fo < 0 ? [] : P4.slice(Math.max(0, fo - 1)).filter(Boolean);
     if (sol.length > 1) g4 += '<polyline points="' + sol.map(q => q.join(',')).join(' ') + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5"></polyline>';
     if (das.length > 1) g4 += '<polyline points="' + das.map(q => q.join(',')).join(' ') + '" fill="none" stroke="' + TEAL + '" stroke-width="2.5" stroke-dasharray="6 5"></polyline>';
     ser.forEach((o, i) => { const open = !isMature(o.m);
-      if (o.v != null) g4 += '<circle cx="' + X4(i) + '" cy="' + Y4(o.v) + '" r="4" fill="' + (open ? '#fff' : TEAL) + '" stroke="' + TEAL + '" stroke-width="2"></circle><text x="' + X4(i) + '" y="' + (Y4(o.v) - 9) + '" text-anchor="middle" style="font:600 11px Lato;fill:' + (open ? '#7A756C' : 'var(--ink)') + ';">' + pct(o.v) + '</text>';
-      g4 += '<text x="' + X4(i) + '" y="' + (H4 - 10) + '" text-anchor="middle" style="font:400 11px Lato;fill:#7A756C;">' + short(o.m.month) + '</text>'; });
-    return g4 + '</svg><div style="font:400 11px Lato;color:' + MUTED + ';">Bottle return rate by order month; months still filling in are dashed and typically rise.</div>';
+      if (o.v != null) g4 += '<circle cx="' + X4(i) + '" cy="' + Y4(o.v) + '" r="4" fill="' + (open ? '#fff' : TEAL) + '" stroke="' + TEAL + '" stroke-width="2"></circle><text x="' + X4(i) + '" y="' + (Y4(o.v) - 9) + '" text-anchor="middle" style="font:600 11px Lato;fill:' + (open ? '#7A756C' : 'var(--ink)') + ';">' + fmtV(o.v) + '</text>';
+      g4 += '<text x="' + X4(i) + '" y="' + (H4 - 9) + '" text-anchor="middle" style="font:400 11px Lato;fill:#7A756C;">' + short(o.m.month) + '</text>'; });
+    return headHtml + g4 + '</svg>';
   };
+  const monthChart = name => '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;">' +
+      '<div style="min-width:0;">' + miniChart(name, 'rate_bottles', v => pct(v), axPct, 'Bottle return rate', '% of bottles sold') + '</div>' +
+      '<div style="min-width:0;">' + miniChart(name, 'returned_revenue', v => usd(v).replace('.0K', 'K'), v => axUsd(Math.round(v)), 'Revenue returned', '$ value returned') + '</div></div>' +
+    '<div style="font:400 11px Lato;color:' + MUTED + ';margin-top:4px;">By order month. Months still filling in are dashed and typically rise.</div>';
   const cell = 'padding:7px 8px;border-bottom:1px solid var(--line);';
-  const tableRows = rows.map(({ name, a, b }) => {
-    const low = a.returns < MIN_VOL, open = S.exp === name;
+  // Color coding (dashboard palette): rate cells tinted vs the company-wide average for the period (red above,
+  // sage below, neutral within 10%); $ returned drawn as a teal data bar; alternating white/cream rows.
+  const tot = rows.reduce((t, x) => { const a = x.a; t.b += a.bottles || 0; if (a.bRate) t.sold += (a.bottles || 0) / a.bRate;
+    t.u += a.usd || 0; if (a.usdPct) t.rev += (a.usd || 0) / a.usdPct; return t; }, { b: 0, sold: 0, u: 0, rev: 0 });
+  const avgB = tot.sold ? tot.b / tot.sold : null, avgU = tot.rev ? tot.u / tot.rev : null;
+  const maxUsd = Math.max(...rows.map(x => x.a.usd || 0), 1);
+  const tint = (v, avg) => { if (v == null || !avg) return ''; const r = v / avg;
+    if (r >= 1.5) return 'background:#F0D5D1;color:#8E2F2F;font-weight:700;';
+    if (r >= 1.25) return 'background:#F6E4E1;color:#9C3B3B;font-weight:700;';
+    if (r >= 1.1) return 'background:#FAEFED;';
+    if (r <= 0.75) return 'background:#E1EADF;color:#3F5E3E;';
+    if (r <= 0.9) return 'background:#EEF3EC;';
+    return ''; };
+  const tableRows = rows.map(({ name, a, b }, i) => {
+    const low = a.returns < MIN_VOL, open = S.exp === name, zebra = i % 2 ? '#FBF9F6' : '#FFFFFF';
     let chg = '<span style="color:' + MUTED + ';">\u2014</span>';
     if (b && b.bRate != null && a.bRate != null) {
       if (!finalCmp) chg = '<span style="color:' + MUTED + ';">not final</span>';
       else { const up = a.bRate > b.bRate, flat = Math.abs((a.bRate - b.bRate) / b.bRate) < 0.02;
         chg = '<span style="display:inline-block;font:700 12px/1 Lato;border-radius:10px;padding:4px 8px;color:' + (flat ? MUTED : (up ? RED : GREEN)) + ';background:' + (flat ? '#F0EDE7' : (up ? '#F6E4E1' : '#E8EFE6')) + ';">' + (flat ? '\u25B6 flat' : (up ? '\u25B2 ' : '\u25BC ') + ptsTxt(a.bRate, b.bRate)) + '</span>'; } }
-    return '<tr data-p="' + esc(name) + '" onclick="retExpand(this.dataset.p)" style="cursor:pointer;' + (low ? 'opacity:.5;' : '') + (open ? 'background:#F7F5F0;' : '') + '">' +
-      '<td style="' + cell + 'font:700 13px Lato;color:var(--ink);">' + (open ? '\u25BE ' : '\u25B8 ') + esc(name) + (low ? ' <span style="font:400 11px Lato;color:' + MUTED + ';">low volume</span>' : '') + '</td>' +
-      '<td style="' + cell + 'text-align:right;font:600 13px Lato;">' + pct(a.bRate) + '</td><td style="' + cell + '">' + chg + '</td>' +
-      '<td style="' + cell + 'text-align:right;">' + pct(a.usdPct) + '</td><td style="' + cell + 'text-align:right;">' + usd(a.usd) + '</td>' +
-      '<td style="' + cell + 'text-align:right;">' + a.bottles.toLocaleString() + '</td><td style="' + cell + 'text-align:right;">' + a.returns.toLocaleString() + '</td></tr>' +
-      (open ? '<tr><td colspan="7" style="padding:6px 12px 14px;background:#F7F5F0;border-bottom:1px solid var(--line);">' + monthChart(name) + '</td></tr>' : '');
+    const pill2 = (txt, st) => '<span style="display:inline-block;min-width:58px;text-align:right;padding:3px 8px;border-radius:8px;' + st + '">' + txt + '</span>';
+    const bar = '<div style="position:relative;height:22px;display:flex;align-items:center;justify-content:flex-end;">' +
+      '<div style="position:absolute;left:0;top:3px;bottom:3px;width:' + ((a.usd || 0) / maxUsd * 100).toFixed(1) + '%;background:#CFE0E1;border-radius:3px;"></div>' +
+      '<span style="position:relative;font-weight:700;color:var(--ink);">' + usd(a.usd) + '</span></div>';
+    return '<tr data-p="' + esc(name) + '" onclick="retExpand(this.dataset.p)" style="cursor:pointer;background:' + (open ? '#F3F0EA' : zebra) + ';' + (low ? 'opacity:.5;' : '') + '">' +
+      '<td style="' + cell + 'font:700 13px Lato;color:var(--ink);"><span style="color:' + TEAL + ';">' + (open ? '\u25BE' : '\u25B8') + '</span> ' + esc(name) + (low ? ' <span style="font:400 11px Lato;color:' + MUTED + ';">low volume</span>' : '') + '</td>' +
+      '<td style="' + cell + 'text-align:right;">' + pill2(pct(a.bRate), tint(a.bRate, avgB)) + '</td><td style="' + cell + '">' + chg + '</td>' +
+      '<td style="' + cell + 'text-align:right;">' + pill2(pct(a.usdPct), tint(a.usdPct, avgU)) + '</td>' +
+      '<td style="' + cell + 'min-width:150px;">' + bar + '</td>' +
+      '<td style="' + cell + 'text-align:right;color:' + MUTED + ';">' + a.bottles.toLocaleString() + '</td><td style="' + cell + 'text-align:right;color:' + MUTED + ';">' + a.returns.toLocaleString() + '</td></tr>' +
+      (open ? '<tr><td colspan="7" style="padding:10px 14px 14px;background:#F3F0EA;border-bottom:1px solid var(--line);">' + monthChart(name) + '</td></tr>' : '');
   }).join('');
   const th = t => '<th style="padding:6px 8px;font:700 11px Lato;letter-spacing:.04em;text-transform:uppercase;color:' + MUTED + ';border-bottom:1px solid var(--line);text-align:' + (t[1] || 'left') + ';">' + t[0] + '</th>';
   const allTable = rows.length ? '<div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-top:12px;">' +
@@ -9841,7 +9866,14 @@ function renderReturns(force) {
     (S.table ? '<div style="overflow-x:auto;margin-top:6px;"><table style="width:100%;border-collapse:collapse;font:400 13px Lato;color:var(--ink);"><thead><tr>' +
       [['Product'], ['Bottle return rate', 'right'], [prior.length ? 'vs ' + period(prior) : 'Change'], ['% of revenue', 'right'], ['$ returned', 'right'], ['Bottles returned', 'right'], ['Returns', 'right']].map(th).join('') +
       '</tr></thead><tbody>' + tableRows + '</tbody></table>' +
-      '<div style="font:400 11px Lato;color:' + MUTED + ';margin-top:6px;">Grayed: fewer than ' + MIN_VOL + ' returns in the period (too few to judge). Change is in percentage points of the bottle return rate.</div></div>' : '') +
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font:400 11px Lato;color:' + MUTED + ';margin-top:8px;">' +
+        '<span>Shaded vs the all-product average for ' + period(sel) + ' (bottle return rate ' + pct(avgB) + ', % of revenue ' + pct(avgU) + '):</span>' +
+        '<span style="background:#F0D5D1;color:#8E2F2F;font-weight:700;padding:2px 6px;border-radius:6px;">50%+ above</span>' +
+        '<span style="background:#F6E4E1;color:#9C3B3B;font-weight:700;padding:2px 6px;border-radius:6px;">25%+ above</span>' +
+        '<span style="background:#FAEFED;padding:2px 6px;border-radius:6px;">10%+ above</span>' +
+        '<span style="background:#EEF3EC;padding:2px 6px;border-radius:6px;">10%+ below</span>' +
+        '<span style="background:#E1EADF;color:#3F5E3E;padding:2px 6px;border-radius:6px;">25%+ below</span>' +
+        '<span>· Bar = $ returned vs the largest product · Grayed rows: fewer than ' + MIN_VOL + ' returns · Change in percentage points of the bottle return rate</span></div></div>' : '') +
     '</div>' : '';
 
   root.innerHTML =
