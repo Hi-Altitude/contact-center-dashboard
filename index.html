@@ -5700,17 +5700,17 @@ a:hover{color:var(--ink-deep);}
               <div style="display:flex;align-items:baseline;gap:14px;"><span style="font:400 12px/1.3 'Lato';color:var(--muted);">{{ ccReasonsSubLabel }}</span><span sc-camel-on-click="{{ closeCcReasonsModal }}" title="Close" style="cursor:pointer;font:700 22px/1 'Lato';color:var(--muted);padding:0 4px;">✕</span></div>
             </div>
             <sc-if value="{{ ccReasonsHas }}" hint-placeholder-val="{{ true }}">
-            <div style="display:grid;grid-template-columns:minmax(150px,1.4fr) repeat(4,minmax(70px,0.6fr)) minmax(120px,1.2fr);gap:0;align-items:center;margin-top:8px;font:400 13px/1 'Lato';">
+            <div style="display:grid;grid-template-columns:minmax(150px,1.4fr) minmax(120px,0.8fr) minmax(140px,0.9fr) minmax(70px,0.55fr) minmax(70px,0.55fr) minmax(110px,1.1fr);gap:0;align-items:end;margin-top:8px;font:400 13px/1 'Lato';">
               <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--line);">Reason</span>
-              <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0 6px 14px;border-bottom:1px solid var(--line);text-align:right;">Phone</span>
-              <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0 6px 14px;border-bottom:1px solid var(--line);text-align:right;">Email/Chat/SMS</span>
+              <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0 6px 14px;border-bottom:1px solid var(--line);text-align:right;line-height:1.35;">Phone<br><span style="font-weight:400;letter-spacing:.02em;text-transform:none;">count &middot; % of calls</span></span>
+              <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0 6px 14px;border-bottom:1px solid var(--line);text-align:right;line-height:1.35;">Email/Chat/SMS<br><span style="font-weight:400;letter-spacing:.02em;text-transform:none;">count &middot; % of tickets</span></span>
               <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0 6px 14px;border-bottom:1px solid var(--line);text-align:right;">Total</span>
-              <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0 6px 14px;border-bottom:1px solid var(--line);text-align:right;">Share</span>
+              <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0 6px 14px;border-bottom:1px solid var(--line);text-align:right;line-height:1.35;">Combined<br>share</span>
               <span style="font:700 11px/1 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 0 6px 14px;border-bottom:1px solid var(--line);"></span>
               <sc-for list="{{ ccReasonsItems }}" as="r" hint-placeholder-count="8">
                 <span style="font:700 14px/1.2 'Lato';color:var(--ink);padding:7px 0;border-bottom:1px solid #F0EBE2;">{{ r.label }}</span>
-                <span style="text-align:right;padding:7px 0 7px 14px;border-bottom:1px solid #F0EBE2;">{{ r.phone }}</span>
-                <span style="text-align:right;padding:7px 0 7px 14px;border-bottom:1px solid #F0EBE2;">{{ r.digital }}</span>
+                <span style="text-align:right;padding:7px 0 7px 14px;border-bottom:1px solid #F0EBE2;">{{ r.phone }}<span style="display:inline-block;width:38px;text-align:right;margin-left:6px;font:700 12px/1 'Lato';color:var(--muted);">{{ r.phonePct }}</span></span>
+                <span style="text-align:right;padding:7px 0 7px 14px;border-bottom:1px solid #F0EBE2;">{{ r.digital }}<span style="display:inline-block;width:38px;text-align:right;margin-left:6px;font:700 12px/1 'Lato';color:var(--muted);">{{ r.digitalPct }}</span></span>
                 <span style="text-align:right;font-weight:700;padding:7px 0 7px 14px;border-bottom:1px solid #F0EBE2;">{{ r.total }}</span>
                 <span style="text-align:right;font:600 15px/1 'Playfair Display';padding:5px 0 5px 14px;border-bottom:1px solid #F0EBE2;">{{ r.share }}</span>
                 <span style="padding:7px 0 7px 14px;border-bottom:1px solid #F0EBE2;"><span style="display:block;height:8px;background:#EFE9DE;border-radius:4px;overflow:hidden;"><span style="display:block;width:{{ r.bar }}%;height:100%;background:{{ r.color }};border-radius:4px;"></span></span></span>
@@ -11774,6 +11774,9 @@ class Component extends DCLogic {
       const total = R.items.reduce((x, a) => x + a.total, 0);
       if (!R.months.length || !total) return Object.assign(base, { ccReasonsNoneLabel: R.inFeed ? 'No contact reasons recorded for ' + selLabel + '. Reasons start Sep 2026.' : 'Contact reasons are not in the feed yet.' });
       const list = R.items.slice().sort((a, b) => (a.isOther - b.isOther) || (b.total - a.total));
+      // Within-channel mix: each reason as a share of that channel's own contacts with a reason (phone incl. new orders).
+      const phoneTot = R.items.reduce((x, a) => x + a.phone, 0), digTot = R.items.reduce((x, a) => x + a.digital, 0);
+      const pctOf = (v, t) => t > 0 ? Math.round(v / t * 100) + '%' : '';
       const top = Math.max(...list.map(a => a.total), 1);
       const src = R.phoneMonths && R.digitalMonths ? 'Phone = FlipCX intent; Email/Chat/SMS = Gorgias AI intent.' : (R.phoneMonths ? 'Phone only (FlipCX intent); email, chat and SMS reasons are not in yet.' : 'Email, chat and SMS only (Gorgias AI intent); phone reasons are not in yet.');
       return Object.assign(base, { ccReasonsHas: true, ccReasonsNone: false,
@@ -11782,8 +11785,9 @@ class Component extends DCLogic {
         ccReasonsPartial: R.months.length < R.selected,
         ccReasonsPartialNote: 'You selected ' + selLabel + '. Contact reasons start Sep 2026, so this table covers ' + monthRangeLabel(R.months) + ' only.',
         ccReasonsItems: list.map(a => ({ label: a.label + (a.isNew ? ' (sales)' : ''), phone: R.phoneMonths ? n(a.phone) : '\u2014', digital: R.digitalMonths ? n(a.digital) : '\u2014', total: n(a.total),
+          phonePct: R.phoneMonths ? pctOf(a.phone, phoneTot) : '', digitalPct: R.digitalMonths ? pctOf(a.digital, digTot) : '',
           share: Math.round(a.total / total * 100) + '%', bar: (a.total / top * 100).toFixed(1), color: a.isNew ? 'var(--human)' : 'var(--sage-deep)' })),
-        ccReasonsNote: src + ' Spam and no-reply tickets are excluded; calls where FlipCX detected no intent are not counted. New orders are sales calls, so the Executive Summary leaves them out.' +
+        ccReasonsNote: src + ' The small percentages show each reason\u2019s share of that channel\u2019s contacts; combined share uses both channels together. Spam and no-reply tickets are excluded; calls where FlipCX detected no intent are not counted. New orders are sales calls, so the Executive Summary leaves them out.' +
           (R.phoneMonths && R.digitalMonths && R.phoneMonths !== R.digitalMonths ? ' Some months have only one source.' : ''),
       });
     })();
