@@ -5692,7 +5692,11 @@ a:hover{color:var(--ink-deep);}
             <div sc-camel-on-click="{{ closeCcReasonsModal }}" style="position:fixed;inset:0;background:rgba(30,26,20,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:40px 16px;">
           <div data-cc-reasons="" sc-camel-on-click="{{ stopProp }}" style="background:var(--card);border-radius:16px;padding:24px 28px;width:min(1100px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35);box-sizing:border-box;">
             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;">
-              <div style="font:700 13px/1.2 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--sage-deep);">Why Customers Contacted Us &middot; All Reasons</div>
+              <div>
+                <div style="font:700 13px/1.2 'Lato';letter-spacing:.05em;text-transform:uppercase;color:var(--sage-deep);">Why Customers Contacted Us &middot; All Reasons</div>
+                <sc-if value="{{ ccReasonsHas }}" hint-placeholder-val="{{ true }}"><div style="display:inline-block;margin-top:8px;background:var(--sage-tint);border-radius:14px;padding:5px 12px;font:700 12px/1 'Lato';letter-spacing:.06em;text-transform:uppercase;color:var(--sage-deep);">{{ ccReasonsPeriodLabel }}</div></sc-if>
+                <sc-if value="{{ ccReasonsPartial }}" hint-placeholder-val="{{ false }}"><div style="font:400 12px/1.4 'Lato';color:#8C6A3F;font-style:italic;margin-top:6px;">{{ ccReasonsPartialNote }}</div></sc-if>
+              </div>
               <div style="display:flex;align-items:baseline;gap:14px;"><span style="font:400 12px/1.3 'Lato';color:var(--muted);">{{ ccReasonsSubLabel }}</span><span sc-camel-on-click="{{ closeCcReasonsModal }}" title="Close" style="cursor:pointer;font:700 22px/1 'Lato';color:var(--muted);padding:0 4px;">✕</span></div>
             </div>
             <sc-if value="{{ ccReasonsHas }}" hint-placeholder-val="{{ true }}">
@@ -7892,7 +7896,8 @@ a:hover{color:var(--ink-deep);}
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;">
         <div>
           <div style="font:700 15px/1.2 'Lato';letter-spacing:.04em;text-transform:uppercase;color:var(--sage-deep);">Why Customers Contacted Us</div>
-          <div style="font:400 15px/1.3 'Lato';color:var(--muted);margin-top:4px;">Top 5 service reasons &middot; {{ reasonsPeriodLabel }}</div>
+          <div style="font:400 15px/1.3 'Lato';color:var(--muted);margin-top:4px;">Top 5 service reasons &middot; <strong style="font-weight:700;color:var(--ink);">{{ reasonsPeriodLabel }}</strong></div>
+          <sc-if value="{{ reasonsPartial }}" hint-placeholder-val="{{ false }}"><div style="font:400 12px/1.4 'Lato';color:#8C6A3F;font-style:italic;margin-top:4px;">{{ reasonsPartialNote }}</div></sc-if>
         </div>
         <sc-if value="{{ reasonsHas }}" hint-placeholder-val="{{ true }}"><div style="font:400 13px/1.3 'Lato';color:var(--muted);">{{ reasonsTotalLabel }}</div></sc-if>
       </div>
@@ -9627,6 +9632,18 @@ function feedToRows(feed) {
   return rows.length ? rows : null;
 }
 
+// 'Sep – Oct 2026', 'Nov 2025 – Oct 2026', 'Oct 2026'; non-consecutive picks are listed ('Jul, Sep, Oct 2026').
+function monthRangeLabel(labels) {
+  const ms = Array.from(new Set(labels || [])).sort((a, b) => monthIdx(a) - monthIdx(b));
+  if (!ms.length) return '';
+  if (ms.length === 1) return ms[0];
+  const [a, ay] = ms[0].split(' '), [b, by] = ms[ms.length - 1].split(' ');
+  const consecutive = ms.every((m, i) => i === 0 || monthIdx(m) === monthIdx(ms[i - 1]) + 1);
+  if (consecutive) return (ay === by ? a : a + ' ' + ay) + ' \u2013 ' + b + ' ' + by;
+  const years = new Set(ms.map(m => m.split(' ')[1]));
+  return years.size === 1 ? ms.map(m => m.split(' ')[0]).join(', ') + ' ' + by : ms.join(', ');
+}
+
 // Contact reasons (feed.breakdowns.contact_reasons) summed over the given month labels ('Oct 2026'). New orders
 // (sales calls) are kept and flagged so each view can include or drop them; spam / no-reply are already out.
 function contactReasonsFor(feed, monthLabels) {
@@ -10626,7 +10643,7 @@ class Component extends DCLogic {
       const all = (((this._feed || {}).breakdowns || {}).contact_reasons) || [];
       const byM = {}; all.forEach(r => { byM[formatMonthLabel(r.month)] = r; });
       const got = selMonths.filter(m => byM[m]);
-      const base = { reasonsPeriodLabel: periodLabel, reasonsHas: false, reasonsNone: true, reasonsItems: [], reasonsNote: '', reasonsTotalLabel: '' };
+      const base = { reasonsPeriodLabel: periodLabel, reasonsHas: false, reasonsNone: true, reasonsItems: [], reasonsNote: '', reasonsTotalLabel: '', reasonsPartial: false, reasonsPartialNote: '' };
       if (!got.length) return Object.assign(base, { reasonsNoneLabel: all.length ? 'No contact reasons recorded for this period. Reasons start Sep 2026.' : 'Contact reasons are not in the feed yet.' });
       const isNew = (it) => String(it.label || '').trim().toLowerCase() === 'new orders';
       const isOther = (it) => String(it.label || '').trim().toLowerCase() === 'other';
@@ -10649,10 +10666,13 @@ class Component extends DCLogic {
       const other = list.filter(a => a.other).reduce((x, a) => x + a.total, 0);
       const n = (v) => Math.round(v).toLocaleString('en-US');
       const sources = phoneMonths && digitalMonths ? 'phone (FlipCX) and email, chat and SMS (Gorgias AI intent)' : (phoneMonths ? 'phone only (FlipCX); email, chat and SMS reasons are not in yet' : 'email, chat and SMS only (Gorgias); phone reasons are not in yet');
-      const gap = got.length < selMonths.length ? ' Reasons cover ' + got.length + ' of the ' + selMonths.length + ' months selected (they start Sep 2026).' : '';
+      const gap = '';
       const uneven = phoneMonths && digitalMonths && phoneMonths !== digitalMonths ? ' Some months have only one source, so the mix leans toward it.' : '';
       return Object.assign(base, {
         reasonsHas: true, reasonsNone: false,
+        reasonsPeriodLabel: monthRangeLabel(got) + (got.length > 1 ? ' combined' : ''),
+        reasonsPartial: got.length < selMonths.length,
+        reasonsPartialNote: 'This view covers ' + periodLabel + ', but contact reasons start Sep 2026, so these reasons cover ' + monthRangeLabel(got) + ' only.',
         reasonsTotalLabel: n(total) + ' service contacts with a recorded reason',
         reasonsItems: ranked.map(a => ({ label: a.label, bar: (a.total / top * 100).toFixed(1), pctLabel: Math.round(a.total / total * 100) + '%',
           countLabel: n(a.total), tip: 'Phone ' + n(a.phone) + ' \u00b7 Email, chat & SMS ' + n(a.digital) })),
@@ -11749,18 +11769,21 @@ class Component extends DCLogic {
     const ccReasonsVals = (() => {
       const R = contactReasonsFor(this._feed, trailing.map(r => r.month));
       const n = (v) => Math.round(v).toLocaleString('en-US');
-      const base = { ccReasonsHas: false, ccReasonsNone: true, ccReasonsItems: [], ccReasonsNote: '', ccReasonsSubLabel: '' };
+      const base = { ccReasonsHas: false, ccReasonsNone: true, ccReasonsItems: [], ccReasonsNote: '', ccReasonsSubLabel: '', ccReasonsPeriodLabel: '', ccReasonsPartial: false, ccReasonsPartialNote: '' };
+      const selLabel = monthRangeLabel(trailing.map(r => r.month));
       const total = R.items.reduce((x, a) => x + a.total, 0);
-      if (!R.months.length || !total) return Object.assign(base, { ccReasonsNoneLabel: R.inFeed ? 'No contact reasons recorded for the months selected. Reasons start Sep 2026.' : 'Contact reasons are not in the feed yet.' });
+      if (!R.months.length || !total) return Object.assign(base, { ccReasonsNoneLabel: R.inFeed ? 'No contact reasons recorded for ' + selLabel + '. Reasons start Sep 2026.' : 'Contact reasons are not in the feed yet.' });
       const list = R.items.slice().sort((a, b) => (a.isOther - b.isOther) || (b.total - a.total));
       const top = Math.max(...list.map(a => a.total), 1);
       const src = R.phoneMonths && R.digitalMonths ? 'Phone = FlipCX intent; Email/Chat/SMS = Gorgias AI intent.' : (R.phoneMonths ? 'Phone only (FlipCX intent); email, chat and SMS reasons are not in yet.' : 'Email, chat and SMS only (Gorgias AI intent); phone reasons are not in yet.');
       return Object.assign(base, { ccReasonsHas: true, ccReasonsNone: false,
-        ccReasonsSubLabel: n(total) + ' contacts with a recorded reason \u00b7 ' + (R.months.length === 1 ? R.months[0] : R.months.length + ' months'),
+        ccReasonsSubLabel: n(total) + ' contacts with a recorded reason',
+        ccReasonsPeriodLabel: monthRangeLabel(R.months) + (R.months.length > 1 ? ' \u00b7 ' + R.months.length + ' months combined' : ''),
+        ccReasonsPartial: R.months.length < R.selected,
+        ccReasonsPartialNote: 'You selected ' + selLabel + '. Contact reasons start Sep 2026, so this table covers ' + monthRangeLabel(R.months) + ' only.',
         ccReasonsItems: list.map(a => ({ label: a.label + (a.isNew ? ' (sales)' : ''), phone: R.phoneMonths ? n(a.phone) : '\u2014', digital: R.digitalMonths ? n(a.digital) : '\u2014', total: n(a.total),
           share: Math.round(a.total / total * 100) + '%', bar: (a.total / top * 100).toFixed(1), color: a.isNew ? 'var(--human)' : 'var(--sage-deep)' })),
         ccReasonsNote: src + ' Spam and no-reply tickets are excluded; calls where FlipCX detected no intent are not counted. New orders are sales calls, so the Executive Summary leaves them out.' +
-          (R.months.length < R.selected ? ' Reasons cover ' + R.months.length + ' of the ' + R.selected + ' months selected.' : '') +
           (R.phoneMonths && R.digitalMonths && R.phoneMonths !== R.digitalMonths ? ' Some months have only one source.' : ''),
       });
     })();
